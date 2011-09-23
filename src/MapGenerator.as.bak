@@ -1,0 +1,365 @@
+package  
+{
+	import flash.geom.Rectangle;
+	import net.flashpunk.graphics.Tilemap;
+	import net.flashpunk.masks.Grid;
+	import net.flashpunk.utils.Draw;
+	import net.flashpunk.FP;
+	
+	/**
+	 * ...
+	 * @author Jerome Vergara Rosario
+	 */
+	public class MapGenerator 
+	{
+		private var _tiles:Tilemap;
+		//private var _tiles:Array;
+		private var _grid:Grid;
+		private var _rows:int;
+		private var _cols:int;
+			
+		public static const NUM_OF_VARIANT:int = 15;
+		
+		public const T:int 		= 1;
+		public const R:int 		= 2;
+		public const TR:int 	= 3;
+		public const B:int 		= 4;
+		public const TB:int 	= 5;
+		public const RB:int 	= 6;
+		public const TRB:int 	= 7;
+		public const L:int 		= 8;
+		public const TL:int 	= 9;
+		public const RL:int		= 10;
+		public const TRL:int 	= 11;
+		public const BL:int		= 12;
+		public const TBL:int	= 13;
+		public const RBL:int	= 14;
+		public const TRBL:int	= 15;
+		
+		public static const LAND:int = 20;
+		public static const SAND:int = 40;
+		public static const FOREST:int = 80;
+		public static const MEADOW:int = 100;
+		public static const SWAMP:int = 120;
+		public static const STONEY:int = 140;
+		public static const RIVER:int = 160;
+		public static const WATER:int = 180;
+		public static const HILL:int = 200;
+		public static const TREE:int = 204;
+		public static const TREE_L:int = 205;
+		public static const TREE_C:int = 206;
+		public static const TREE_R:int = 207;
+		
+		public function MapGenerator() 
+		{	
+		}
+		
+		public function generate(cols:int, rows:int):Tilemap
+		{
+			_rows = rows;
+			_cols = cols;
+			
+			_tiles = new Tilemap(Assets.TILESET, _cols * 30, _rows * 30, 30, 30);
+			//_tiles = new Array();
+			
+			for (var i:int = 0; i < _cols; i++)
+			{
+				
+				for (var j:int = 0; j < _rows; j++)
+				{
+					if (Math.random() < 0.50)
+					{
+						_tiles.setTile(i, j, LAND);
+					} 
+					else
+					{
+						_tiles.setTile(i, j, WATER);
+					}
+				}
+			}
+			
+			for (i = 0; i < 8; i++ )
+			{
+				iterateLand(LAND, WATER);
+			}
+			
+			generateTile(SAND, [LAND], 0.5);
+			for (i = 0; i < 8; i++ )
+			{
+				iterateLand(SAND, LAND);
+			}
+			
+			generateTile(MEADOW, [LAND], 0.6);
+			for (i = 0; i < 8; i++ )
+			{
+				iterateLand(MEADOW, LAND);
+			}
+			
+			generateTile(TREE, [LAND], 0.7);
+			for (i = 0; i < 8; i++ )
+			{
+				iterateLand(TREE, LAND);
+			}
+			
+			applyTransitionTiles();
+			createGrid();
+			drawGrid();
+			
+			return _tiles;
+		}
+		
+		public function createGrid():Grid
+		{
+			_grid = _tiles.createGrid(concatenateAllTilesAndTheirVariant([MapGenerator.WATER]).concat(MapGenerator.TREE, MapGenerator.TREE_C, MapGenerator.TREE_L, MapGenerator.TREE_R));
+			return _grid;
+		}
+		
+		private function concatenateAllTilesAndTheirVariant(baseTiles:Array):Array
+		{
+			var tilesList:Array = new Array();
+			for (var i:int = 0; i < baseTiles.length; i++)
+			{
+				var temp:Array = getAllVariants(baseTiles[i]);
+				for (var j:int = 0; j < temp.length; j++)
+				{
+					
+					tilesList.push(temp[j]);	
+				}
+			}
+			return tilesList;
+		}
+		
+		private function getAllVariants(baseTile:int):Array 
+		{
+			var tilesList:Array = new Array();
+			for (var i:int = 0; i <= MapGenerator.NUM_OF_VARIANT; i++)
+			{
+				tilesList.push(baseTile+i);
+			}
+			return tilesList;
+		}
+		
+		private function drawGrid():void
+		{
+			for ( var i:int = 0; i < _cols; i++ )
+			{
+				for ( var j:int = 0; j < _rows; j++ )
+				{
+					if (!_grid.getTile(i, j))
+					{
+						_tiles.draw(i * 30, j * 30, FP.getBitmap(Assets.BOX));
+					}
+				}
+			}
+		}
+		
+		private function generateTile(tile:int, onTopOf:Array, ratio:Number):void
+		{
+			for (var i:int = 0; i < _cols; i++)
+			{
+				for (var j:int = 0; j < _rows; j++)
+				{
+					for (var k:int = 0; k < onTopOf.length; k++)
+					{
+						if (_tiles.getTile(i, j) == onTopOf[k])
+						{
+							if (Math.random() < ratio)
+							{
+								_tiles.setTile(i, j, tile);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		private function iterateLand(land:int, defaultLand:int):void
+		{
+			for (var i:int = 0; i < _cols; i++)
+			{
+				for (var j:int = 0; j < _rows; j++)
+				{
+					if (_tiles.getTile(i, j) == land || _tiles.getTile(i, j) == defaultLand)
+					{
+						if (adjacentLand(i, j, land) >= 5)
+						{
+							_tiles.setTile(i, j, land);
+						}
+						else
+						{
+							_tiles.setTile(i, j, defaultLand);
+						}
+					}
+				}
+			}
+		}
+		
+		private function adjacentLand(col:int, row:int, lookFor:uint):int
+		{
+			var found:int = 0;
+			var startX:int = Math.max(0, col - 1);
+			var endX:int = Math.min(_cols - 1, col + 1);
+			var startY:int = Math.max(0, row - 1);
+			var endY:int = Math.min(_rows - 1, row + 1);
+			
+			for (var i:uint = startX; i <= endX; i++)
+			{
+				for (var j:uint = startY; j <= endY; j++)
+				{
+					if (_tiles.getTile(i, j) == lookFor)
+					{
+						found++;
+					}
+				}
+			}
+			
+			return found;
+		}
+		
+		private function applyTransitionTiles():void
+		{
+			for (var i:int = 0; i < _cols; i++)
+			{
+				for (var j:int = 0; j < _rows; j++)
+				{
+					if (_tiles.getTile(i, j) == WATER)
+					{
+						correctNeighbors(WATER, i, j);
+					}
+					else if (_tiles.getTile(i, j) == MEADOW)
+					{
+						correctNeighbors(MEADOW, i, j);
+					}
+					else if (_tiles.getTile(i, j) == SWAMP)
+					{
+						correctNeighbors(SWAMP, i, j);
+					}
+					else if (_tiles.getTile(i, j) == RIVER)
+					{
+						correctNeighbors(RIVER, i, j);
+					}
+					else if (_tiles.getTile(i, j) == STONEY)
+					{
+						correctNeighbors(STONEY, i, j);
+					}
+					else if (_tiles.getTile(i, j) == FOREST)
+					{
+						correctNeighbors(FOREST, i, j);
+					}
+					else if (_tiles.getTile(i, j) == SAND)
+					{
+						correctNeighbors(SAND, i, j);
+					}
+					else if (_tiles.getTile(i, j) == TREE)
+					{
+						if (_tiles.getTile(i + 1, j) == TREE && _tiles.getTile(i + 2, j) == TREE)
+						{
+							_tiles.setTile(i, j, TREE_L);
+							_tiles.setTile(i + 1, j, TREE_C);
+							_tiles.setTile(i + 2, j, TREE_R);
+						} 
+						else if (_tiles.getTile(i + 1, j) == TREE)
+						{
+							_tiles.setTile(i, j, TREE_L);
+							_tiles.setTile(i + 1, j, TREE_R);
+						}
+					}
+				}
+			}
+		}
+		
+		private function correctNeighbors(baseTile:int, i:int, j:int):void
+		{
+			if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+				!isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile) &&
+				!isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile) &&
+				!isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TRBL);
+			}
+			
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TRB);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TRL);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TBL);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + RBL);
+			}
+			
+			
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TR);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TB);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + RB);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + TL);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + RL);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile) &&
+					 !isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + BL);
+			}
+			
+			else if (!isTileAVariantOf(_tiles.getTile(i, j - 1), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + T);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i + 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + R);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i, j + 1), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + B);
+			}
+			else if (!isTileAVariantOf(_tiles.getTile(i - 1, j), baseTile))
+			{
+				_tiles.setTile(i, j, baseTile + L);
+			}
+		}
+		
+		private function isTileAVariantOf(variant:int, tile:int):Boolean
+		{
+			if (variant >= tile && variant <= tile + NUM_OF_VARIANT)
+			{
+				return true;
+			}
+			return false;
+		}
+	}
+}
