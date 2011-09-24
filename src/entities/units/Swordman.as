@@ -13,7 +13,12 @@ package entities.units
 		public function Swordman(position:Point) 
 		{
 			super(Assets.SWORDMAN, position);
+			name = "Zorro";
 			_className = "Swordman";
+			hp = 5000;
+			curHp = 5000;
+			mp = 500;
+			curMp = 500;
 		}	
 	}
 }

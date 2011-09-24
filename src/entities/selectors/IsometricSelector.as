@@ -26,6 +26,22 @@ package entities.selectors
 			_occupiedImage.originY = 0;
 		}
 		
+		public function show():void
+		{
+			if (graphic)
+			{
+				graphic.visible = true;
+			}
+		}
+		
+		public function hide():void
+		{
+			if (graphic)
+			{
+				graphic.visible = false;
+			}
+		}
+		
 		public function cellIsWalakble():void
 		{
 			graphic = _walkableImage;

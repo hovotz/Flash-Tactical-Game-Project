@@ -1,8 +1,10 @@
 package worlds 
 {
+	import entities.bars.Bar;
 	import entities.huds.Hud;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import punk.ui.PunkButton;
 	
 	
 	import net.flashpunk.Entity;
@@ -53,6 +55,8 @@ package worlds
 		private var _isometricSelectorInIsometricSpaceY:int;
 		private var _isometricSelectorInScreen:Point;
 		
+		private var _attackButton:PunkButton;
+		
 		public function IsometricCombatWorld() 
 		{
 			var terrainBuilder:TerrainBuilder = new TerrainBuilder(new IsomapTerrainBuilderStrategy());
@@ -61,6 +65,10 @@ package worlds
 			_terrain = terrainBuilder.build(terrainGenerator.generate(50, 50), 30);
 			addTerrain(_terrain);
 			_xOffset = _terrain.rows * _terrain.cellSize;
+			
+			_attackButton = new PunkButton(10, 100, 100, 25, "Attack");
+			_attackButton.setCallbacks(onReleased, onPressed, onEnter, onExit);
+			add(_attackButton);
 			
 			_isometricSelector = new IsometricSelector();
 			add(_isometricSelector);
@@ -77,6 +85,26 @@ package worlds
 			_hud = new Hud();
 			add(_hud);
 			_hud.target = _inFocus;
+		}
+		
+		private function onReleased():void
+		{
+			trace("_attackButton onReleased()");
+		}
+		
+		private function onPressed():void
+		{
+			trace("_attackButton onPressed()");
+		}
+		
+		private function onEnter():void
+		{
+			trace("_attackButton onEnter()");
+		}
+		
+		private function onExit():void
+		{
+			trace("_attackButton onExit()");
 		}
 		
 		private function addTerrain(terrain:Terrain):void
@@ -98,15 +126,25 @@ package worlds
 				_camera.focusTarget();
 			}
 			
-			if (Input.pressed(Key.SPACE))
+			if (Input.pressed(Key.M))
 			{
-				if (!_inFocus.isWalking())
-				{
-					_inFocus.playAttackAnimation();
-				}
+				_attackButton.visible = !_attackButton.visible;
+				_attackButton.active = _attackButton.visible;
 			}
 			
-			if (Input.mousePressed)
+			if (!_inFocus.isWalking())
+			{
+				if (Input.pressed(Key.SPACE))
+				{
+					_inFocus.playJumpAnimation();
+				} 
+				if (Input.pressed(Key.A))
+				{
+					_inFocus.playAttackAnimation();
+				} 
+			}
+			
+			if (Input.mousePressed && !_attackButton.isMoused)
 			{
 				var inFocusPositionIsIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_inFocus.x, _inFocus.y));
 				
@@ -179,17 +217,23 @@ package worlds
 				_isometricSelector.visible = false;
 			}
 			else 
-			{
-				if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
+			{	if (_attackButton.isMoused)
 				{
+					_isometricSelector.hide();
+				}
+				else if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
+				{
+					_isometricSelector.show();
 					_isometricSelector.cellIsUnWalkable();
 				}
 				else if (_terrain.isOccupied(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
 				{
+					_isometricSelector.show();
 					_isometricSelector.cellIsOccupied();
 				}
 				else
 				{
+					_isometricSelector.show();
 					_isometricSelector.cellIsWalakble();
 				}
 				

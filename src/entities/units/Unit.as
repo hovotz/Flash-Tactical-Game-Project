@@ -38,6 +38,15 @@ package entities.units
 		public static const RUN_RIGHT:String			= "run_right";
 		public static const RUN_RIGHT_DOWN:String		= "run_right_down";
 		
+		public static const JUMP_DOWN:String			= "jump_down";
+		public static const JUMP_DOWN_LEFT:String		= "jump_down_left";
+		public static const JUMP_LEFT:String			= "jump_left";
+		public static const JUMP_LEFT_UP:String			= "jump_left_up";
+		public static const JUMP_UP:String				= "jump_up";
+		public static const JUMP_UP_RIGHT:String		= "jump_up_right";
+		public static const JUMP_RIGHT:String			= "jump_right";
+		public static const JUMP_RIGHT_DOWN:String 		= "jump_right_down";
+		
 		public static const ATTACK_DOWN:String			= "attack_down";
 		public static const ATTACK_DOWN_LEFT:String		= "attack_down_left";
 		public static const ATTACK_LEFT:String			= "attack_left";
@@ -62,6 +71,12 @@ package entities.units
 		
 		protected var _className:String;
 		
+		protected var _hp:int;
+		protected var _curHp:int;
+		
+		protected var _mp:int;
+		protected var _curMp:int;
+		
 		public function isWalking():Boolean
 		{
 			return _isWalking;
@@ -70,6 +85,46 @@ package entities.units
 		public function get className():String
 		{
 			return _className;
+		}
+		
+		public function get hp():int
+		{
+			return _hp;
+		}
+		
+		public function set hp(value:int):void
+		{
+			_hp = value;
+		}
+		
+		public function get curHp():int
+		{
+			return _curHp;
+		}
+		
+		public function set curHp(value:int):void
+		{
+			_curHp = value;
+		}
+		
+		public function get mp():int
+		{
+			return _mp;
+		}
+		
+		public function set mp(value:int):void
+		{
+			_mp = value;
+		}
+		
+		public function get curMp():int
+		{
+			return _curMp;
+		}
+		
+		public function set curMp(value:int):void
+		{
+			_curMp = value;
 		}
 		
 		public function Unit(source:*, position:Point) 
@@ -118,6 +173,15 @@ package entities.units
 			_spritemap.add(Unit.RUN_UP_RIGHT,		[29, 37, 45, 53], 9, true);
 			_spritemap.add(Unit.RUN_RIGHT, 			[30, 38, 46, 54], 9, true);
 			_spritemap.add(Unit.RUN_RIGHT_DOWN,		[31, 39, 47, 55], 9, true);
+			
+			_spritemap.add(Unit.JUMP_DOWN, 			[64, 56, 64], 9, true);
+			_spritemap.add(Unit.JUMP_DOWN_LEFT, 	[65, 57, 65], 9, true);
+			_spritemap.add(Unit.JUMP_LEFT, 			[66, 58, 66], 9, true);
+			_spritemap.add(Unit.JUMP_LEFT_UP, 		[67, 59, 67], 9, true);
+			_spritemap.add(Unit.JUMP_UP, 			[68, 60, 68], 9, true);
+			_spritemap.add(Unit.JUMP_UP_RIGHT,		[69, 61, 69], 9, true);
+			_spritemap.add(Unit.JUMP_RIGHT, 		[70, 62, 70], 9, true);
+			_spritemap.add(Unit.JUMP_RIGHT_DOWN,	[71, 63, 71], 9, true);
 			
 			_spritemap.add(Unit.ATTACK_DOWN, 		[128, 136, 144, 152, 160, 168], 15, false);
 			_spritemap.add(Unit.ATTACK_DOWN_LEFT, 	[129, 137, 145, 153, 161, 169], 15, false);
@@ -241,39 +305,85 @@ package entities.units
 			}
 		}
 		
+		public function playJumpAnimation():void
+		{
+			switch (_currentAnimation)
+			{
+				case Unit.STAND_DOWN:
+					_currentAnimation = Unit.JUMP_DOWN;
+					break;
+					
+				case Unit.STAND_DOWN_LEFT:
+					_currentAnimation = Unit.JUMP_DOWN_LEFT;
+					break;
+					
+				case Unit.STAND_LEFT: 
+					_currentAnimation = Unit.JUMP_LEFT;
+					break;
+					
+				case Unit.STAND_LEFT_UP: 
+					_currentAnimation = Unit.JUMP_LEFT_UP;
+					break;
+
+				case Unit.STAND_UP:
+					_currentAnimation = Unit.JUMP_UP;
+					break;
+					
+				case Unit.STAND_UP_RIGHT:
+					_currentAnimation = Unit.JUMP_UP_RIGHT;
+					break;
+					
+				case Unit.STAND_RIGHT:
+					_currentAnimation = Unit.JUMP_RIGHT;
+					break;
+					
+				case Unit.STAND_RIGHT_DOWN:
+					_currentAnimation = Unit.JUMP_RIGHT_DOWN;
+					break;
+			}
+		}
+		
 		private function animationCallback():void
 		{
 			switch (_currentAnimation)
 			{
 				case Unit.ATTACK_DOWN:
+				case Unit.JUMP_DOWN:
 					_currentAnimation = Unit.STAND_DOWN;
 					break;
 					
 				case Unit.ATTACK_DOWN_LEFT:
+				case Unit.JUMP_DOWN_LEFT:
 					_currentAnimation = Unit.STAND_DOWN_LEFT;
 					break;
 					
-				case Unit.ATTACK_LEFT: 
+				case Unit.ATTACK_LEFT:
+				case Unit.JUMP_LEFT:
 					_currentAnimation = Unit.STAND_LEFT;
 					break;
 					
-				case Unit.ATTACK_LEFT_UP: 
+				case Unit.ATTACK_LEFT_UP:
+				case Unit.JUMP_LEFT_UP:
 					_currentAnimation = Unit.STAND_LEFT_UP;
 					break;
 
 				case Unit.ATTACK_UP:
+				case Unit.JUMP_UP:
 					_currentAnimation = Unit.STAND_UP;
 					break;
 					
 				case Unit.ATTACK_UP_RIGHT:
+				case Unit.JUMP_UP_RIGHT:
 					_currentAnimation = Unit.STAND_UP_RIGHT;
 					break;
 					
 				case Unit.ATTACK_RIGHT:
+				case Unit.JUMP_RIGHT:
 					_currentAnimation = Unit.STAND_RIGHT;
 					break;
 					
 				case Unit.ATTACK_RIGHT_DOWN:
+				case Unit.JUMP_RIGHT_DOWN:
 					_currentAnimation = Unit.STAND_RIGHT_DOWN;
 					break;
 			}

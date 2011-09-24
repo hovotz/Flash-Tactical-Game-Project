@@ -10,7 +10,12 @@ package entities.units
 		public function Sorceror(position:Point) 
 		{
 			super(Assets.SORCEROR, position);
+			name = "Ultimecio";
 			_className = "Sorceror";
+			hp = 500;
+			curHp = 500;
+			mp = 5000;
+			curMp = 5000;
 		}	
 	}
 }
