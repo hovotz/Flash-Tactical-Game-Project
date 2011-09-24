@@ -11,6 +11,7 @@ package entities.units
 		public function Ninja(position:Point) 
 		{
 			super(Assets.NINJA, position);
+			_className = "Ninja";
 		}	
 	}
 }

@@ -2,6 +2,7 @@ package
 {
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import worlds.UIWorld;
 	
 	import net.flashpunk.Engine;
 	import net.flashpunk.FP;
@@ -28,6 +29,7 @@ package
 			super.init();
 			//FP.world = new CombatWorld();
 			FP.world = new IsometricCombatWorld();
+			//FP.world = new UIWorld();
 		}
 	}	
 }

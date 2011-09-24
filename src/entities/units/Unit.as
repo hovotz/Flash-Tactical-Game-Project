@@ -20,23 +20,32 @@ package entities.units
 	 */
 	public class Unit extends Entity 
 	{		
-		public static const STAND_DOWN:String 		= "stand_down";
-		public static const STAND_DOWN_LEFT:String 	= "stand_down_left";
-		public static const STAND_LEFT:String 		= "stand_left";
-		public static const STAND_LEFT_UP:String	= "stand_left_up";
-		public static const STAND_UP:String			= "stand_up";
-		public static const STAND_UP_RIGHT:String	= "stand_up_right";
-		public static const STAND_RIGHT:String		= "stand_right";
-		public static const STAND_RIGHT_DOWN:String = "stand_right_down";
+		public static const STAND_DOWN:String 			= "stand_down";
+		public static const STAND_DOWN_LEFT:String 		= "stand_down_left";
+		public static const STAND_LEFT:String 			= "stand_left";
+		public static const STAND_LEFT_UP:String		= "stand_left_up";
+		public static const STAND_UP:String				= "stand_up";
+		public static const STAND_UP_RIGHT:String		= "stand_up_right";
+		public static const STAND_RIGHT:String			= "stand_right";
+		public static const STAND_RIGHT_DOWN:String 	= "stand_right_down";
 		
-		public static const RUN_DOWN:String			= "run_down";
-		public static const RUN_DOWN_LEFT:String	= "run_down_left";
-		public static const RUN_LEFT:String			= "run_left";
-		public static const RUN_LEFT_UP:String		= "run_left_up";
-		public static const RUN_UP:String			= "run_up";
-		public static const RUN_UP_RIGHT:String		= "run_up_right";
-		public static const RUN_RIGHT:String		= "run_right";
-		public static const RUN_RIGHT_DOWN:String	= "run_right_down";
+		public static const RUN_DOWN:String				= "run_down";
+		public static const RUN_DOWN_LEFT:String		= "run_down_left";
+		public static const RUN_LEFT:String				= "run_left";
+		public static const RUN_LEFT_UP:String			= "run_left_up";
+		public static const RUN_UP:String				= "run_up";
+		public static const RUN_UP_RIGHT:String			= "run_up_right";
+		public static const RUN_RIGHT:String			= "run_right";
+		public static const RUN_RIGHT_DOWN:String		= "run_right_down";
+		
+		public static const ATTACK_DOWN:String			= "attack_down";
+		public static const ATTACK_DOWN_LEFT:String		= "attack_down_left";
+		public static const ATTACK_LEFT:String			= "attack_left";
+		public static const ATTACK_LEFT_UP:String		= "attack_left_up";
+		public static const ATTACK_UP:String			= "attack_up";
+		public static const ATTACK_UP_RIGHT:String		= "attack_up_right";
+		public static const ATTACK_RIGHT:String			= "attack_right";
+		public static const ATTACK_RIGHT_DOWN:String 	= "attack_right_down";
 		
 		private var _terrain:Terrain;
 		
@@ -51,9 +60,22 @@ package entities.units
 		protected var _spriteWidth:Number = 50;
 		protected var _spriteHeight:Number = 50;
 		
+		protected var _className:String;
+		
+		public function isWalking():Boolean
+		{
+			return _isWalking;
+		}
+		
+		public function get className():String
+		{
+			return _className;
+		}
+		
 		public function Unit(source:*, position:Point) 
 		{	
 			_spritemap = new Spritemap(source, _spriteWidth, _spriteHeight);
+			_spritemap.callback = animationCallback;
 			// top view settings
 			//_spritemap.x = -10;
 			//_spritemap.y = -20;
@@ -61,8 +83,6 @@ package entities.units
 			// isometric view settings
 			_spritemap.x = -25;
 			_spritemap.y = -20;
-			
-			
 			
 			setupSpritemap();
 			graphic = _spritemap;
@@ -81,14 +101,6 @@ package entities.units
 		
 		public function setupSpritemap():void
 		{
-			_spritemap.add(Unit.RUN_DOWN, 			[24, 32, 40, 48], 9, true);
-			_spritemap.add(Unit.RUN_DOWN_LEFT, 		[25, 33, 41, 49], 9, true);
-			_spritemap.add(Unit.RUN_LEFT, 			[26, 34, 42, 50], 9, true);
-			_spritemap.add(Unit.RUN_LEFT_UP, 		[27, 35, 43, 51], 9, true);
-			_spritemap.add(Unit.RUN_UP, 			[28, 36, 44, 52], 9, true);
-			_spritemap.add(Unit.RUN_UP_RIGHT,		[29, 37, 45, 53], 9, true);
-			_spritemap.add(Unit.RUN_RIGHT, 			[30, 38, 46, 54], 9, true);
-			_spritemap.add(Unit.RUN_RIGHT_DOWN,		[31, 39, 47, 55], 9, true);
 			_spritemap.add(Unit.STAND_DOWN, 		[16], 0, false);
 			_spritemap.add(Unit.STAND_DOWN_LEFT, 	[17], 0, false);
 			_spritemap.add(Unit.STAND_LEFT, 		[18], 0, false);
@@ -97,6 +109,24 @@ package entities.units
 			_spritemap.add(Unit.STAND_UP_RIGHT,		[21], 0, false);
 			_spritemap.add(Unit.STAND_RIGHT, 		[22], 0, false);
 			_spritemap.add(Unit.STAND_RIGHT_DOWN,	[23], 0, false);
+			
+			_spritemap.add(Unit.RUN_DOWN, 			[24, 32, 40, 48], 9, true);
+			_spritemap.add(Unit.RUN_DOWN_LEFT, 		[25, 33, 41, 49], 9, true);
+			_spritemap.add(Unit.RUN_LEFT, 			[26, 34, 42, 50], 9, true);
+			_spritemap.add(Unit.RUN_LEFT_UP, 		[27, 35, 43, 51], 9, true);
+			_spritemap.add(Unit.RUN_UP, 			[28, 36, 44, 52], 9, true);
+			_spritemap.add(Unit.RUN_UP_RIGHT,		[29, 37, 45, 53], 9, true);
+			_spritemap.add(Unit.RUN_RIGHT, 			[30, 38, 46, 54], 9, true);
+			_spritemap.add(Unit.RUN_RIGHT_DOWN,		[31, 39, 47, 55], 9, true);
+			
+			_spritemap.add(Unit.ATTACK_DOWN, 		[128, 136, 144, 152, 160, 168], 15, false);
+			_spritemap.add(Unit.ATTACK_DOWN_LEFT, 	[129, 137, 145, 153, 161, 169], 15, false);
+			_spritemap.add(Unit.ATTACK_LEFT, 		[130, 138, 146, 154, 162, 170], 15, false);
+			_spritemap.add(Unit.ATTACK_LEFT_UP, 	[131, 139, 147, 155, 163, 171], 15, false);
+			_spritemap.add(Unit.ATTACK_UP, 			[132, 140, 148, 156, 164, 172], 15, false);
+			_spritemap.add(Unit.ATTACK_UP_RIGHT,	[133, 141, 149, 157, 165, 173], 15, false);
+			_spritemap.add(Unit.ATTACK_RIGHT, 		[134, 142, 150, 158, 166, 174], 15, false);
+			_spritemap.add(Unit.ATTACK_RIGHT_DOWN,	[135, 143, 151, 159, 167, 175], 15, false);
 		}
 		
 		private function setCurrentAnimationBaseOnDirection(deltaX:Number, deltaY:Number):void
@@ -168,6 +198,82 @@ package entities.units
 					break;
 					
 				case Unit.RUN_RIGHT_DOWN:
+					_currentAnimation = Unit.STAND_RIGHT_DOWN;
+					break;
+			}
+		}
+		
+		public function playAttackAnimation():void
+		{
+			switch (_currentAnimation)
+			{
+				case Unit.STAND_DOWN:
+					_currentAnimation = Unit.ATTACK_DOWN;
+					break;
+					
+				case Unit.STAND_DOWN_LEFT:
+					_currentAnimation = Unit.ATTACK_DOWN_LEFT;
+					break;
+					
+				case Unit.STAND_LEFT: 
+					_currentAnimation = Unit.ATTACK_LEFT;
+					break;
+					
+				case Unit.STAND_LEFT_UP: 
+					_currentAnimation = Unit.ATTACK_LEFT_UP;
+					break;
+
+				case Unit.STAND_UP:
+					_currentAnimation = Unit.ATTACK_UP;
+					break;
+					
+				case Unit.STAND_UP_RIGHT:
+					_currentAnimation = Unit.ATTACK_UP_RIGHT;
+					break;
+					
+				case Unit.STAND_RIGHT:
+					_currentAnimation = Unit.ATTACK_RIGHT;
+					break;
+					
+				case Unit.STAND_RIGHT_DOWN:
+					_currentAnimation = Unit.ATTACK_RIGHT_DOWN;
+					break;
+			}
+		}
+		
+		private function animationCallback():void
+		{
+			switch (_currentAnimation)
+			{
+				case Unit.ATTACK_DOWN:
+					_currentAnimation = Unit.STAND_DOWN;
+					break;
+					
+				case Unit.ATTACK_DOWN_LEFT:
+					_currentAnimation = Unit.STAND_DOWN_LEFT;
+					break;
+					
+				case Unit.ATTACK_LEFT: 
+					_currentAnimation = Unit.STAND_LEFT;
+					break;
+					
+				case Unit.ATTACK_LEFT_UP: 
+					_currentAnimation = Unit.STAND_LEFT_UP;
+					break;
+
+				case Unit.ATTACK_UP:
+					_currentAnimation = Unit.STAND_UP;
+					break;
+					
+				case Unit.ATTACK_UP_RIGHT:
+					_currentAnimation = Unit.STAND_UP_RIGHT;
+					break;
+					
+				case Unit.ATTACK_RIGHT:
+					_currentAnimation = Unit.STAND_RIGHT;
+					break;
+					
+				case Unit.ATTACK_RIGHT_DOWN:
 					_currentAnimation = Unit.STAND_RIGHT_DOWN;
 					break;
 			}

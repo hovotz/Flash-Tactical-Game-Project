@@ -54,6 +54,9 @@ package
 		[Embed(source = '../assets/isometric_selector_green.png')]
 		public static const ISO_SELECTOR_GREEN:Class;
 		
+		[Embed(source = '../assets/arial.ttf', embedAsCFF="false", fontFamily='Arial Font')]
+		public static const ARIAL_FONT:Class;
+		
 		public function Assets() 
 		{	
 		}	

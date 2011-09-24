@@ -1,5 +1,6 @@
 package worlds 
 {
+	import entities.huds.Hud;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	
@@ -36,6 +37,7 @@ package worlds
 	 */
 	public class IsometricCombatWorld extends World 
 	{
+		private var _hud:Hud;
 		private var _units:Array;
 		private var _inFocus:Unit;
 		
@@ -71,6 +73,10 @@ package worlds
 			_inFocus = _units[0];
 			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), _inFocus);
 			_camera.focusTarget();
+			
+			_hud = new Hud();
+			add(_hud);
+			_hud.target = _inFocus;
 		}
 		
 		private function addTerrain(terrain:Terrain):void
@@ -90,6 +96,14 @@ package worlds
 				switchUnit();
 				_camera.target = _inFocus;
 				_camera.focusTarget();
+			}
+			
+			if (Input.pressed(Key.SPACE))
+			{
+				if (!_inFocus.isWalking())
+				{
+					_inFocus.playAttackAnimation();
+				}
 			}
 			
 			if (Input.mousePressed)
@@ -145,6 +159,7 @@ package worlds
 			currentIndex++;
 			currentIndex %= _units.length;
 			_inFocus = _units[currentIndex];
+			_hud.target = _inFocus;
 		}
 		
 		private function updateSelector():void

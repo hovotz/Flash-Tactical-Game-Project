@@ -13,6 +13,7 @@ package entities.units
 		public function Swordman(position:Point) 
 		{
 			super(Assets.SWORDMAN, position);
+			_className = "Swordman";
 		}	
 	}
 }

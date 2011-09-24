@@ -11,6 +11,7 @@ package entities.units
 		{
 			super(Assets.DRAGON, position);
 			_spritemap.y = -15;
+			_className = "Dragon";
 		}	
 	}
 }

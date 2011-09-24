@@ -11,6 +11,7 @@ package entities.units
 		public function Archer(position:Point) 
 		{
 			super(Assets.ARCHER, position);
+			_className = "Archer";
 		}	
 	}
 }

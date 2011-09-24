@@ -10,6 +10,7 @@ package entities.units
 		public function Witch(position:Point) 
 		{	
 			super(Assets.WITCH, position);
+			_className = "Witch";
 		}	
 	}
 }
