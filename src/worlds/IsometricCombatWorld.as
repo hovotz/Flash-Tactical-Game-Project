@@ -55,7 +55,7 @@ package worlds
 		private var _isometricSelectorInIsometricSpaceY:int;
 		private var _isometricSelectorInScreen:Point;
 		
-		private var _attackButton:PunkButton;
+		//private var _attackButton:PunkButton;
 		
 		public function IsometricCombatWorld() 
 		{
@@ -66,9 +66,9 @@ package worlds
 			addTerrain(_terrain);
 			_xOffset = _terrain.rows * _terrain.cellSize;
 			
-			_attackButton = new PunkButton(10, 100, 100, 25, "Attack");
-			_attackButton.setCallbacks(onReleased, onPressed, onEnter, onExit);
-			add(_attackButton);
+			//_attackButton = new PunkButton(10, 100, 100, 25, "Attack");
+			//_attackButton.setCallbacks(onReleased, onPressed, onEnter, onExit);
+			//add(_attackButton);
 			
 			_isometricSelector = new IsometricSelector();
 			add(_isometricSelector);
@@ -87,6 +87,7 @@ package worlds
 			_hud.target = _inFocus;
 		}
 		
+		/*
 		private function onReleased():void
 		{
 			trace("_attackButton onReleased()");
@@ -106,6 +107,7 @@ package worlds
 		{
 			trace("_attackButton onExit()");
 		}
+		*/
 		
 		private function addTerrain(terrain:Terrain):void
 		{
@@ -126,11 +128,13 @@ package worlds
 				_camera.focusTarget();
 			}
 			
+			/*
 			if (Input.pressed(Key.M))
 			{
 				_attackButton.visible = !_attackButton.visible;
 				_attackButton.active = _attackButton.visible;
 			}
+			*/
 			
 			if (!_inFocus.isWalking())
 			{
@@ -144,7 +148,7 @@ package worlds
 				} 
 			}
 			
-			if (Input.mousePressed && !_attackButton.isMoused)
+			if (Input.mousePressed) // && !_attackButton.isMoused)
 			{
 				var inFocusPositionIsIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_inFocus.x, _inFocus.y));
 				
@@ -217,11 +221,13 @@ package worlds
 				_isometricSelector.visible = false;
 			}
 			else 
-			{	if (_attackButton.isMoused)
+			{	
+				/*
+				if (_attackButton.isMoused)
 				{
 					_isometricSelector.hide();
 				}
-				else if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
+				else*/ if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
 				{
 					_isometricSelector.show();
 					_isometricSelector.cellIsUnWalkable();
