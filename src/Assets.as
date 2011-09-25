@@ -57,6 +57,9 @@ package
 		[Embed(source = '../assets/arial.ttf', embedAsCFF="false", fontFamily='Arial Font')]
 		public static const ARIAL_FONT:Class;
 		
+		[Embed(source = '../assets/units_picture_strip.png')]
+		public static const UNITS_PICTURE_STRIP:Class;
+		
 		public function Assets() 
 		{	
 		}	

@@ -14,7 +14,7 @@ package entities.units
 		{
 			super(Assets.SWORDMAN, position);
 			name = "Zorro";
-			_className = "Swordman";
+			_className = "Swordsman";
 			hp = 5000;
 			curHp = 5000;
 			mp = 500;
