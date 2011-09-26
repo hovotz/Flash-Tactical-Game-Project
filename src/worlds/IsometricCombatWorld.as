@@ -4,6 +4,8 @@ package worlds
 	import entities.huds.Hud;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import managers.UnitsManager;
+	import org.aswing.*;
 	import punk.ui.PunkButton;
 	
 	
@@ -25,13 +27,6 @@ package worlds
 	import utilities.builders.TerrainBuilder;
 	
 	import entities.selectors.IsometricSelector;
-	import entities.units.Unit;
-	import entities.units.Swordman;
-	import entities.units.Dragon;
-	import entities.units.Archer;
-	import entities.units.Ninja;
-	import entities.units.Sorceror;
-	import entities.units.Witch;
 	
 	/**
 	 * ...
@@ -40,12 +35,11 @@ package worlds
 	public class IsometricCombatWorld extends World 
 	{
 		private var _hud:Hud;
-		private var _units:Array;
-		private var _inFocus:Unit;
+		private var _unitsManager:UnitsManager;
+		private var _camera:Camera;
 		
 		private var _terrain:Terrain;
 		private var _xOffset:int;
-		private var _camera:Camera;
 		
 		private var _isometricSelector:IsometricSelector;
 		private var _mousePositionInIsometricSpace:Point3D;
@@ -55,7 +49,11 @@ package worlds
 		private var _isometricSelectorInIsometricSpaceY:int;
 		private var _isometricSelectorInScreen:Point;
 		
-		//private var _attackButton:PunkButton;
+		private var _frame:JFrame;
+		private var _panel:JPanel;
+		private var _attackButton:JButton;
+		private var _moveButton:JButton;
+		private var _waitButton:JButton;
 		
 		public function IsometricCombatWorld() 
 		{
@@ -66,48 +64,57 @@ package worlds
 			addTerrain(_terrain);
 			_xOffset = _terrain.rows * _terrain.cellSize;
 			
-			//_attackButton = new PunkButton(10, 100, 100, 25, "Attack");
-			//_attackButton.setCallbacks(onReleased, onPressed, onEnter, onExit);
-			//add(_attackButton);
-			
 			_isometricSelector = new IsometricSelector();
 			add(_isometricSelector);
 			updateSelector();
 			
 			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), null);
 			
-			_units = new Array();
-			createUnits();
-			_inFocus = _units[0];
-			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), _inFocus);
+			_unitsManager = new UnitsManager(this, _terrain);
+			_unitsManager.createUnits();
+			_unitsManager.focusFirstUnit();
+			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), _unitsManager.getUnitInFocus());
 			_camera.focusTarget();
 			
 			_hud = new Hud();
 			add(_hud);
-			_hud.target = _inFocus;
+			_hud.target = _unitsManager.getUnitInFocus();
+		}
+		
+		private function createGUI():void
+		{
+			AsWingManager.setRoot(FP.engine);
+			
+			_frame = new JFrame(FP.engine, "Unit's Actions");
+			_panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			_attackButton = new JButton("Attack");
+			_attackButton.width = 100;
+			_moveButton = new JButton("Move");
+			_waitButton = new JButton("Wait");
+			_panel.appendAll(_attackButton, _moveButton, _waitButton);
+			
+			_frame.setSizeWH(110, 400);
+			_frame.setClosable(false);
+			_frame.setResizable(false);
+			_frame.getContentPane().append(_panel);
+			_frame.show();
 		}
 		
 		/*
-		private function onReleased():void
+		override public function begin():void
 		{
-			trace("_attackButton onReleased()");
-		}
-		
-		private function onPressed():void
-		{
-			trace("_attackButton onPressed()");
-		}
-		
-		private function onEnter():void
-		{
-			trace("_attackButton onEnter()");
-		}
-		
-		private function onExit():void
-		{
-			trace("_attackButton onExit()");
+			createGUI();
+			super.begin();
 		}
 		*/
+				
+		private function switchUnit():void
+		{
+			_unitsManager.focusNextUnit();
+			_hud.target = _unitsManager.getUnitInFocus();
+			_camera.target = _unitsManager.getUnitInFocus();
+			_camera.focusTarget();
+		}
 		
 		private function addTerrain(terrain:Terrain):void
 		{
@@ -124,48 +131,43 @@ package worlds
 			if (Input.pressed(Key.TAB))
 			{
 				switchUnit();
-				_camera.target = _inFocus;
-				_camera.focusTarget();
 			}
 			
-			/*
-			if (Input.pressed(Key.M))
-			{
-				_attackButton.visible = !_attackButton.visible;
-				_attackButton.active = _attackButton.visible;
-			}
-			*/
-			
-			if (!_inFocus.isWalking())
+			if (!_unitsManager.getUnitInFocus().isWalking())
 			{
 				if (Input.pressed(Key.SPACE))
 				{
-					_inFocus.playJumpAnimation();
+					_unitsManager.getUnitInFocus().playJumpAnimation();
 				} 
 				if (Input.pressed(Key.A))
 				{
-					_inFocus.playAttackAnimation();
+					_unitsManager.getUnitInFocus().playAttackAnimation();
 				} 
 			}
 			
-			if (Input.mousePressed) // && !_attackButton.isMoused)
+			if (Input.mousePressed)
 			{
-				var inFocusPositionIsIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_inFocus.x, _inFocus.y));
+				var inFocusPositionIsIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_unitsManager.getUnitInFocus().x,_unitsManager.getUnitInFocus().y));
 				
 				var startCol:int = inFocusPositionIsIsometricSpace.x / _terrain.cellSize;
 				var startRow:int = inFocusPositionIsIsometricSpace.z / _terrain.cellSize;
 				var endCol:int = _isometricSelectorInIsometricSpaceCol;
 				var endRow:int = _isometricSelectorInIsometricSpaceRow;
 				
-				if (_terrain.isOccupied(endCol, endRow))
+				if (endCol < 0 || endCol >= _terrain.cols ||
+					endRow < 0 || endRow >= _terrain.rows)
+				{
+					trace("Cursor is outside the boundary of the terrain!");
+				}
+				else if (_terrain.isOccupied(endCol, endRow))
 				{
 					_terrain.setOccupied(endCol, endRow, false);
 					if (_terrain.findPath(startCol, startRow, endCol, endRow))
 					{
-						_inFocus.path = _terrain.path;
-						_inFocus.path.pop();
+						_unitsManager.getUnitInFocus().path = _terrain.path;
+						_unitsManager.getUnitInFocus().path.pop();
 						_terrain.setOccupied(endCol, endRow, true);
-						_inFocus.startWalkByPath();
+						_unitsManager.getUnitInFocus().startWalkByPath();
 					}
 					else
 					{
@@ -176,8 +178,8 @@ package worlds
 				{
 					if (_terrain.findPath(startCol, startRow, endCol, endRow))
 					{
-						_inFocus.path = _terrain.path;
-						_inFocus.startWalkByPath();
+						_unitsManager.getUnitInFocus().path = _terrain.path;
+						_unitsManager.getUnitInFocus().startWalkByPath();
 					}
 					else
 					{
@@ -193,15 +195,6 @@ package worlds
 			_camera.update();
 			updateSelector();
 			super.update();
-		}
-		
-		private function switchUnit():void
-		{
-			var currentIndex:int = _units.indexOf(_inFocus);
-			currentIndex++;
-			currentIndex %= _units.length;
-			_inFocus = _units[currentIndex];
-			_hud.target = _inFocus;
 		}
 		
 		private function updateSelector():void
@@ -222,12 +215,7 @@ package worlds
 			}
 			else 
 			{	
-				/*
-				if (_attackButton.isMoused)
-				{
-					_isometricSelector.hide();
-				}
-				else*/ if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
+				if (!_terrain.isWalkable(_isometricSelectorInIsometricSpaceCol, _isometricSelectorInIsometricSpaceRow))
 				{
 					_isometricSelector.show();
 					_isometricSelector.cellIsUnWalkable();
@@ -248,54 +236,6 @@ package worlds
 				_isometricSelector.x = _isometricSelectorInScreen.x;
 				_isometricSelector.y = _isometricSelectorInScreen.y;
 			}
-		}
-		
-		private function createUnits():void
-		{
-
-			var unit:Unit = new Swordman(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Dragon(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Archer(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Ninja(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Sorceror(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Witch(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-		}
-		
-		private function generateValidPosition():Point
-		{
-			var valid:Boolean = false;
-			while (!valid)
-			{
-				var pCol:int = Math.random() * _terrain.cols;
-				var pRow:int = Math.random() * _terrain.rows;
-				valid = _terrain.isWalkable(pCol, pRow) && !_terrain.isOccupied(pCol, pRow);
-			}
-			_terrain.setOccupied(pCol, pRow, true);
-			var unitPosition:Point = IsoUtils.isoToScreen(new Point3D(pCol * _terrain.cellSize, 0, pRow * _terrain.cellSize));
-			return new Point(unitPosition.x, unitPosition.y);
 		}
 	}
 }

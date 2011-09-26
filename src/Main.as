@@ -9,6 +9,7 @@ package
 	
 	import worlds.CombatWorld;
 	import worlds.IsometricCombatWorld;
+	import worlds.AsWingWorld;
 	
 	/**
 	 * ...
@@ -30,6 +31,7 @@ package
 			//FP.world = new CombatWorld();
 			FP.world = new IsometricCombatWorld();
 			//FP.world = new UIWorld();
+			//FP.world = new AsWingWorld();
 		}
 	}	
 }

@@ -145,11 +145,6 @@ package entities.units
 			x = position.x;
 			y = position.y;
 			
-			Input.define("walk_up", Key.W, Key.UP);
-			Input.define("walk_left", Key.A, Key.LEFT);
-			Input.define("walk_down", Key.S, Key.DOWN);
-			Input.define("walk_right", Key.D, Key.RIGHT);
-			
 			//setHitbox(_spriteWidth, _spriteHeight, 10, 20);
 			setHitbox(_spriteWidth, _spriteHeight, 25, 20);
 		}
@@ -473,71 +468,6 @@ package entities.units
 			_isWalking = false;
 		}
 		
-		public function inFocusUpdate():void
-		{
-			var horizontalMovement:Boolean = true;
-			var verticalMovement:Boolean = true;
-			
-			_spritemap.play(_currentAnimation);
-			
-			if (Input.check("walk_left"))
-			{
-				if (!colliding(new Point(x - _walkingSpeed, y)))
-				{
-					x -= _walkingSpeed;
-					_currentAnimation = "walk_left";	
-				}
-			}
-			else if (Input.check("walk_right"))
-			{
-				if (!colliding(new Point(x + _walkingSpeed, y)))
-				{
-					x += _walkingSpeed;
-					_currentAnimation = "walk_right";	
-				}
-			}
-			else horizontalMovement = false;
-			
-			if (Input.check("walk_up"))
-			{
-				if (!colliding(new Point(x, y - _walkingSpeed)))
-				{
-					y -= _walkingSpeed;
-					_currentAnimation = "walk_up";	
-				}
-			}
-			else if (Input.check("walk_down"))
-			{
-				if (!colliding(new Point(x, y + _walkingSpeed)))
-				{
-					y += _walkingSpeed;
-					_currentAnimation = "walk_down";	
-				}
-			}
-			else verticalMovement = false;
-			
-			if ((!verticalMovement) && (!horizontalMovement))
-			{
-				switch (_currentAnimation)
-				{
-					case "walk_left": 
-						_currentAnimation = "stand_left"; 
-						break;
-						
-					case "walk_right":
-						_currentAnimation = "stand_right";
-						break;
-						
-					case "walk_up":
-						_currentAnimation = "stand_up";
-						break;
-						
-					case "walk_down":
-						_currentAnimation = "stand_down";
-				}
-			}
-		}
-		
 		override public function update():void
 		{
 			_spritemap.play(_currentAnimation);
@@ -546,13 +476,6 @@ package entities.units
 				walking();
 			}
 			super.update();
-		}
-		
-		public function colliding(position:Point):Boolean
-		{
-			if (collide("solid", position.x, position.y)) return true;
-			else if (collide("house", position.x, position.y)) return true;
-			else return false;
 		}
 	}
 }
