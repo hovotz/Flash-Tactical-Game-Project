@@ -107,6 +107,10 @@ package worlds
 		private function onUnitStopMove(e:UnitEvent):void
 		{
 			_currentState = IsometricCombatWorld.NORMAL_STATE;
+			for each (var node:Node in _highlightedNodeList)
+			{
+				node.highlighted = false;
+			}
 			removeList(_highlightList);
 			_frame.show();
 			trace("Unit Stop Move");
