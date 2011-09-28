@@ -1,5 +1,6 @@
 package managers 
 {
+	import events.MessageDispatcher;
 	import flash.geom.Point;
 	
 	import net.flashpunk.World;
@@ -25,14 +26,16 @@ package managers
 	{
 		private var _world:World;
 		private var _terrain:Terrain;
+		private var _messageDispatcher:MessageDispatcher;
 		
 		private var _units:Array;
 		private var _unitInFocus:Unit;
 		
-		public function UnitsManager(world:World, terrain:Terrain)
+		public function UnitsManager(world:World, terrain:Terrain, messageDispatcher:MessageDispatcher)
 		{
 			_world = world;
 			_terrain = terrain;
+			_messageDispatcher = messageDispatcher;
 			
 			_units = new Array();
 		}
@@ -57,32 +60,33 @@ package managers
 		
 		public function createUnits():void
 		{
-			var unit:Unit = new Swordman(generateValidPosition());
+			var unit:Unit = new Swordman(generateValidPosition(), _messageDispatcher);
+			unit.terrain = _terrain;
+			unit.layer = 1;
+			_world.add(unit);
+			_units.push(unit);
+			
+			unit = new Dragon(generateValidPosition(), _messageDispatcher);
 			unit.terrain = _terrain;
 			_world.add(unit);
 			_units.push(unit);
 			
-			unit = new Dragon(generateValidPosition());
+			unit = new Archer(generateValidPosition(), _messageDispatcher);
 			unit.terrain = _terrain;
 			_world.add(unit);
 			_units.push(unit);
 			
-			unit = new Archer(generateValidPosition());
+			unit = new Ninja(generateValidPosition(), _messageDispatcher);
 			unit.terrain = _terrain;
 			_world.add(unit);
 			_units.push(unit);
 			
-			unit = new Ninja(generateValidPosition());
+			unit = new Sorceror(generateValidPosition(), _messageDispatcher);
 			unit.terrain = _terrain;
 			_world.add(unit);
 			_units.push(unit);
 			
-			unit = new Sorceror(generateValidPosition());
-			unit.terrain = _terrain;
-			_world.add(unit);
-			_units.push(unit);
-			
-			unit = new Witch(generateValidPosition());
+			unit = new Witch(generateValidPosition(), _messageDispatcher);
 			unit.terrain = _terrain;
 			_world.add(unit);
 			_units.push(unit);

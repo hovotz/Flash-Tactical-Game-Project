@@ -38,6 +38,7 @@ package utilities.builders
 					image.originX = 30;
 					image.originY = 0;
 					var entity:Entity = new Entity(position.x, position.y, image);
+					entity.layer = 4;
 					terrain.add(entity);
 				}
 			}

@@ -64,9 +64,24 @@ package com.hovotz.utilities
 			_nodes[x][y].walkable = value;
 		}
 		
+		public function isOccupied(col:int, row:int):Boolean
+		{
+			return _nodes[col][row].occupied;
+		}
+		
 		public function setOccupied(x:int, y:int, value:Boolean):void
 		{
 			_nodes[x][y].occupied = value;
+		}
+		
+		public function isHighlighted(col:int, row:int):Boolean
+		{
+			return _nodes[col][row].highlighted;
+		}
+		
+		public function setHighlighted(x:int, y:int, value:Boolean):void
+		{
+			_nodes[x][y].highlighted = value;
 		}
 		
 		public function get endNode():Node

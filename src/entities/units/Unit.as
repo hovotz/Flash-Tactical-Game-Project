@@ -1,5 +1,7 @@
 package entities.units
 {
+	import events.MessageDispatcher;
+	import events.UnitEvent;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Point;
 	import utilities.builders.Terrain;
@@ -57,6 +59,7 @@ package entities.units
 		public static const ATTACK_RIGHT_DOWN:String 	= "attack_right_down";
 		
 		private var _terrain:Terrain;
+		private var _messageDispatcher:MessageDispatcher;
 		
 		private var _currentAnimation:String = Unit.STAND_DOWN;
 		private var _path:Array;
@@ -70,12 +73,11 @@ package entities.units
 		protected var _spriteHeight:Number = 50;
 		
 		protected var _className:String;
-		
 		protected var _hp:int;
 		protected var _curHp:int;
-		
 		protected var _mp:int;
 		protected var _curMp:int;
+		protected var _movement:int;
 		
 		public function isWalking():Boolean
 		{
@@ -127,7 +129,17 @@ package entities.units
 			_curMp = value;
 		}
 		
-		public function Unit(source:*, position:Point) 
+		public function get movement():int
+		{
+			return _movement;
+		}
+		
+		public function set movement(value:int):void
+		{
+			_movement = value;
+		}
+		
+		public function Unit(source:*, position:Point, messageDispatcher:MessageDispatcher) 
 		{	
 			_spritemap = new Spritemap(source, _spriteWidth, _spriteHeight);
 			_spritemap.callback = animationCallback;
@@ -147,6 +159,8 @@ package entities.units
 			
 			//setHitbox(_spriteWidth, _spriteHeight, 10, 20);
 			setHitbox(_spriteWidth, _spriteHeight, 25, 20);
+			
+			_messageDispatcher = messageDispatcher;
 		}
 		
 		public function setupSpritemap():void
@@ -466,6 +480,7 @@ package entities.units
 			_terrain.setOccupied(unitPositionInIsometricSpace.x / _terrain.cellSize, unitPositionInIsometricSpace.z / _terrain.cellSize, true);
 			stopRunning();
 			_isWalking = false;
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.STOP_MOVE));
 		}
 		
 		override public function update():void

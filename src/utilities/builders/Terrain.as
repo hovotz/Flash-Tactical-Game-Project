@@ -22,6 +22,11 @@ package utilities.builders
 		private var _width:int;
 		private var _height:int;
 		
+		public function get grid():Grid
+		{
+			return _grid;
+		}
+		
 		public function get entities():Array
 		{
 			return _entities;
@@ -86,6 +91,16 @@ package utilities.builders
 		public function setOccupied(col:int, row:int, value:Boolean):void
 		{
 			_grid.setOccupied(col, row, value);
+		}
+		
+		public function isHighlighted(col:int, row:int):Boolean
+		{
+			return _grid.getNode(col, row).highlighted;
+		}
+		
+		public function setHighlighted(col:int, row:int, value:Boolean):void
+		{
+			_grid.setHighlighted(col, row, value);
 		}
 		
 		public function findPath(startCol:int, startRow:int, endCol:int, endRow:int):Boolean

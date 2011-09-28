@@ -1,5 +1,6 @@
 package com.hovotz.utilities 
 {
+	
 	/**
 	 * ...
 	 * @author Jerome Vergara Rosario
@@ -20,6 +21,148 @@ package com.hovotz.utilities
 		
 		public function AStar() 
 		{	
+		}
+		
+		/*
+		public function findMovement(col:int, row:int, distance:int, grid:Grid):Array
+		{
+			_grid = grid;
+		
+			var availableMovementNodes:Array = new Array();
+			
+			var startX:int = Math.max(0, col - distance);
+			var endX:int = Math.min(_grid.cols - 1, col + distance);
+			var startY:int = Math.max(0, row - distance);
+			var endY:int = Math.min(_grid.rows - 1, row + distance);
+			
+			for (var i:int = startX; i <= endX; i++)
+			{
+				for (var j:int = startY; j <= endY; j++)
+				{				
+					if (_grid.isWalkable(i, j) && !_grid.isOccupied(i, j))
+					{
+						var dx:Number = Math.abs(col - i);
+						var dy:Number = Math.abs(row - j);
+						var diag:Number = Math.min(dx, dy);
+						var straight:Number = dx + dy;
+						var d:int = Math.SQRT2 * diag + 1 * (straight - 2 * diag);
+						
+						if (d <= distance)
+						{
+							availableMovementNodes.push(_grid.getNode(i, j));
+						}
+					}
+				}
+			}
+			
+			return availableMovementNodes;
+		}
+		*/
+		
+		public function findMovementRange(col:int, row:int, distance:int, grid:Grid):Array
+		{
+			_grid = grid;
+			_open = new Array();
+			_closed = new Array();
+			var availableMovementNodes:Array = new Array();
+			var originNode:Node = _grid.getNode(col, row);
+			originNode.g = 0;
+			
+			var node:Node = originNode;
+			while (true)
+			{
+				var startX:int = Math.max(0, (node.col - 1), (col - distance));
+				var endX:int = Math.min((_grid.cols - 1), (node.col + 1), (col + distance));
+				var startY:int = Math.max(0, (node.row - 1), (row - distance));
+				var endY:int = Math.min((_grid.rows - 1), (node.row + 1), (row + distance));
+				
+				for (var i:int = startX; i <= endX; i++)
+				{
+					for (var j:int = startY; j <= endY; j++)
+					{
+						var test:Node = _grid.getNode(i, j);
+						if (test == node ||
+							!test.walkable ||
+							test.occupied ||
+							!_grid.getNode(node.col, test.row).walkable ||
+							!_grid.getNode(test.col, node.row).walkable ||
+							(!(node == originNode) &&
+							(_grid.getNode(node.col, test.row).occupied ||
+							_grid.getNode(test.col, node.row).occupied)))// ||
+							//!((node.col == test.col) || (node.row == test.row)))
+						{
+							continue;
+						}
+						else if (!node == originNode)
+						{
+						}
+						var cost:Number = _straightCost;
+						
+						if (!((node.col == test.col) || (node.row == test.row)))
+						{
+							cost = _diagCost;
+						}
+						
+						var g:Number = node.g + cost * test.costMultiplier;
+						
+						if (g > distance)
+						{
+							continue;
+						}
+						
+						if (isOpen(test) || isClosed(test))
+						{
+							if (test.g > g)
+							{
+								test.g = g;				
+							}
+						}
+						else
+						{
+							test.g = g;
+							_open.push(test);
+							availableMovementNodes.push(test);
+						}
+					}
+				}
+				_closed.push(node);
+				if (_open.length == 0)
+				{
+					break;
+				}
+				_open.sortOn("g", Array.NUMERIC);
+				node = _open.shift() as Node;
+			}
+			return availableMovementNodes;
+			
+			/*
+			var startX:int = Math.max(0, col - distance);
+			var endX:int = Math.min(_grid.cols - 1, col + distance);
+			var startY:int = Math.max(0, row - distance);
+			var endY:int = Math.min(_grid.rows - 1, row + distance);
+			
+			for (var i:int = startX; i <= endX; i++)
+			{
+				for (var j:int = startY; j <= endY; j++)
+				{				
+					if (_grid.isWalkable(i, j) && !_grid.isOccupied(i, j))
+					{
+						var dx:Number = Math.abs(col - i);
+						var dy:Number = Math.abs(row - j);
+						var diag:Number = Math.min(dx, dy);
+						var straight:Number = dx + dy;
+						var d:int = Math.SQRT2 * diag + 1 * (straight - 2 * diag);
+						
+						if (d <= distance)
+						{
+							availableMovementNodes.push(_grid.getNode(i, j));
+						}
+					}
+				}
+			}
+			
+			return availableMovementNodes;
+			*/
 		}
 		
 		public function findPath(grid:Grid):Boolean 

@@ -14,6 +14,7 @@ package com.hovotz.utilities
 		public var h:Number;
 		public var walkable:Boolean = true;
 		public var occupied:Boolean = false;
+		public var highlighted:Boolean = false;
 		public var parent:Node;
 		public var costMultiplier:Number = 1.0;
 		

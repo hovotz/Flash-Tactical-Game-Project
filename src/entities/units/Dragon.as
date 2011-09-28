@@ -1,5 +1,6 @@
 package entities.units 
 {
+	import events.MessageDispatcher;
 	import flash.geom.Point;
 	/**
 	 * ...
@@ -7,9 +8,9 @@ package entities.units
 	 */
 	public class Dragon extends Unit 
 	{
-		public function Dragon(position:Point) 
+		public function Dragon(position:Point, messageDispatcher:MessageDispatcher) 
 		{
-			super(Assets.DRAGON, position);
+			super(Assets.DRAGON, position, messageDispatcher);
 			_spritemap.y = -15;
 			name = "Dibo";
 			_className = "Dragon";
@@ -17,6 +18,7 @@ package entities.units
 			curHp = 5000;
 			mp = 5000;
 			curMp = 5000;
+			movement = 15;
 		}	
 	}
 }
