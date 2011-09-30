@@ -16,6 +16,9 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
+    <class path="lib\AsWing" />
+    <class path="lib\FlashPunk" />
+    <class path="lib\PunkUI" />
   </classpaths>
   <!-- Build options -->
   <build>

@@ -4,9 +4,9 @@ package entities.units
 	import events.UnitEvent;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Point;
-	import utilities.builders.Terrain;
-	import utilities.isometricprojection.IsoUtils;
-	import utilities.isometricprojection.Point3D;
+	
+	import utilities.Point3D;
+	import utilities.IsoUtils;
 	
 	import net.flashpunk.Entity;
 	import net.flashpunk.graphics.Spritemap;
@@ -14,7 +14,9 @@ package entities.units
 	import net.flashpunk.utils.Key;
 	import net.flashpunk.FP;
 	
-	import com.hovotz.utilities.Node;
+	import builders.Terrain;
+	
+	import graph.Node;
 	
 	/**
 	 * ...
@@ -415,6 +417,7 @@ package entities.units
 		
 		public function startWalkByPath():void
 		{
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.START_MOVE));
 			if (_path != null && _path.length > 0)
 			{
 				_path.shift();

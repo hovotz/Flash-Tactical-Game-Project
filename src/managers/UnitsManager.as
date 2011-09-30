@@ -5,10 +5,10 @@ package managers
 	
 	import net.flashpunk.World;
 	
-	import utilities.isometricprojection.IsoUtils;
-	import utilities.isometricprojection.Point3D;
+	import utilities.Point3D;
+	import utilities.IsoUtils;
 	
-	import utilities.builders.Terrain;
+	import builders.Terrain;
 	
 	import entities.units.Unit;
 	import entities.units.Swordman;

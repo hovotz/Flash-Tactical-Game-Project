@@ -44,7 +44,7 @@ package worlds
 			
 			var terrainBuilder:TerrainBuilder = new TerrainBuilder(new TilemapTerrainBuilderStrategy());
 			var terrainGenerator:TerrainGenerator = new TerrainGenerator();
-			_terrain = terrainBuilder.build(terrainGenerator.generate(100, 100), 30);
+			_terrain = terrainBuilder.build(this, terrainGenerator.generate(100, 100), 30);
 			addTerrain(_terrain);
 			
 			//_terrain = new Terrain(100, 100, 30);
