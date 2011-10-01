@@ -15,6 +15,9 @@ package states
 	import utilities.Point3D;
 	import utilities.IsoUtils;
 	
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	
 	/**
 	 * ...
 	 * @author Jerome Vergara Rosario
@@ -50,12 +53,15 @@ package states
 			_selector = agent.getSelector();
 			agent.highlightCurrentUnitMovementRange();
 			agent.getSelector().show()
+			agent.getUnitActionsMenuForm().addEventListener(MouseEvent.MOUSE_OVER, onMouseOverEvent);
+			agent.getUnitActionsMenuForm().addEventListener(MouseEvent.MOUSE_OUT, onMouseOutEvent);
+			agent.getUnitActionsMenuForm().cancelButton.addEventListener(MouseEvent.CLICK, onCancelButtonClickEvent);
 			agent.getMessageDispatcher().addEventListener(UnitEvent.START_MOVE, onStartMoveEvent);
 		}
 		
 		public function update(agent:*):void
 		{
-			if (Input.mousePressed)
+			if (Input.mousePressed && _selector.active)
 			{
 				// Unit's position in isometric space
 				var unitIS:Point3D = IsoUtils.screenToIso(new Point(_unit.x,_unit.y));
@@ -92,12 +98,31 @@ package states
 		public function exit(agent:*):void
 		{
 			agent.getSelector().hide();
+			agent.getTerrain().unhighlightCells();
+			agent.getUnitActionsMenuForm().removeEventListener(MouseEvent.MOUSE_OVER, onMouseOverEvent);
+			agent.getUnitActionsMenuForm().removeEventListener(MouseEvent.MOUSE_OUT, onMouseOutEvent);
 			agent.getMessageDispatcher().removeEventListener(UnitEvent.START_MOVE, onStartMoveEvent);
+			agent.getUnitActionsMenuForm().cancelButton.removeEventListener(MouseEvent.CLICK, onCancelButtonClickEvent);
+		}
+		
+		private function onMouseOverEvent(me:MouseEvent):void
+		{
+			_selector.hide();
+		}
+		
+		private function onMouseOutEvent(me:MouseEvent):void
+		{
+			_selector.show();
 		}
 		
 		private function onStartMoveEvent(ue:UnitEvent):void
 		{
 			_agent.getStateMachine().changeState(BattlePerformMoveState.getInstance());
+		}
+		
+		private function onCancelButtonClickEvent(e:Event):void
+		{
+			_agent.getStateMachine().changeState(BattleActionSelectionState.getInstance());
 		}
 	}
 }

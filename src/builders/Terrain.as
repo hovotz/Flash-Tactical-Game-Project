@@ -32,6 +32,7 @@ package builders
 		private var _cols:int;
 		private var _rows:int;
 		private var _cellSize:int;
+		private var _xOffset:int;
 		
 		private var _width:int;
 		private var _height:int;
@@ -71,6 +72,11 @@ package builders
 			return _height;
 		}
 		
+		public function get xOffset():int
+		{
+			return _xOffset;
+		}
+		
 		public function Terrain(world:World, grid:Grid, width:int, height:int, cellSize:int) 
 		{	
 			_tiles = new Array();
@@ -81,6 +87,7 @@ package builders
 			_width = width;
 			_height = height;
 			_cellSize = cellSize;
+			_xOffset = _grid.rows * _cellSize;
 		}
 		
 		public function addTile(tile:Entity):void

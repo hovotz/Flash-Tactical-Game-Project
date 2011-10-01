@@ -1,5 +1,8 @@
 package states 
 {
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	
 	import fsm.State;
 	
 	/**
@@ -9,6 +12,8 @@ package states
 	public class BattleDecideAttackState implements State 
 	{
 		private static var instance:BattleDecideAttackState;
+		
+		private var _agent:*;
 		
 		public function BattleDecideAttackState(key:SingletonEnforcer) 
 		{
@@ -26,6 +31,8 @@ package states
 		
 		public function enter(agent:*):void
 		{
+			_agent = agent;
+			agent.getUnitActionsMenuForm().cancelButton.addEventListener(MouseEvent.CLICK, onCancelButtonClickEvent);
 		}
 		
 		public function update(agent:*):void
@@ -34,6 +41,12 @@ package states
 		
 		public function exit(agent:*):void
 		{
+			agent.getUnitActionsMenuForm().cancelButton.removeEventListener(MouseEvent.CLICK, onCancelButtonClickEvent);
+		}
+		
+		private function onCancelButtonClickEvent(e:Event):void
+		{
+			_agent.getStateMachine().changeState(BattleActionSelectionState.getInstance());
 		}
 	}
 }

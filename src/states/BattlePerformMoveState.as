@@ -31,8 +31,8 @@ package states
 		public function enter(agent:*):void
 		{
 			_agent = agent;
+			agent.getUnitActionsMenuForm().hide();
 			agent.getMessageDispatcher().addEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
-			agent.getTerrain().unhighlightCells();
 		}
 		
 		public function update(agent:*):void
@@ -41,6 +41,7 @@ package states
 		
 		public function exit(agent:*):void
 		{
+			agent.getUnitActionsMenuForm().show();
 			agent.getMessageDispatcher().removeEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
 		}
 		

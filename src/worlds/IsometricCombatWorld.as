@@ -4,6 +4,7 @@ package worlds
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import org.aswing.border.EmptyBorder;
 	
 	import forms.UnitActionMenuForm;
 	
@@ -51,7 +52,6 @@ package worlds
 	public class IsometricCombatWorld extends World 
 	{
 		private var _terrain:Terrain;
-		private var _xOffset:int;
 		private var _messageDispatcher:MessageDispatcher;
 		private var _unitActionsMenuForm:UnitActionMenuForm;
 		private var _stateMachine:StateMachine;
@@ -95,7 +95,6 @@ package worlds
 			var terrainBuilder:TerrainBuilder = new TerrainBuilder(new IsomapTerrainBuilderStrategy());
 			var terrainGenerator:TerrainGenerator = new TerrainGenerator();
 			_terrain = terrainBuilder.build(this, terrainGenerator.generate(50, 50), 30);
-			_xOffset = _terrain.rows * _terrain.cellSize;
 			
 			_messageDispatcher = new MessageDispatcher();
 
@@ -104,12 +103,12 @@ package worlds
 			_selector.hide();
 			add(_selector);
 			
-			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), null);
+			_camera = new Camera(this, new Rectangle( -_terrain.xOffset, 0, _terrain.width, _terrain.height), null);
 			
 			_unitsManager = new UnitsManager(this, _terrain, _messageDispatcher);
 			_unitsManager.createUnits();
 			_unitsManager.focusFirstUnit();
-			_camera = new Camera(this, new Rectangle( -_xOffset, 0, _terrain.width, _terrain.height), _unitsManager.getUnitInFocus());
+			_camera = new Camera(this, new Rectangle( -_terrain.xOffset, 0, _terrain.width, _terrain.height), _unitsManager.getUnitInFocus());
 			_camera.focusTarget();
 			
 			_hud = new Hud();
@@ -119,7 +118,8 @@ package worlds
 			AsWingManager.setRoot(FP.engine);
 			
 			_unitActionsMenuForm = new UnitActionMenuForm(FP.engine, "Unit's Actions");
-			_unitActionsMenuForm.setLocationXY(0, 480 - 117);
+			_unitActionsMenuForm.changeAppearance(UnitActionMenuForm.NORMAL_APPEARANCE);
+			_unitActionsMenuForm.setLocationXY(FP.width - _unitActionsMenuForm.getWidth(), FP.height - _unitActionsMenuForm.getHeight());
 			
 			_stateMachine = new StateMachine(this);
 			_stateMachine.setCurrentState(BattleActionSelectionState.getInstance());
