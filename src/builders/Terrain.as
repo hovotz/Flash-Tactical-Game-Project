@@ -1,6 +1,7 @@
 package builders 
 {
 	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	
 	import net.flashpunk.Entity;
 	import net.flashpunk.World;
@@ -36,6 +37,7 @@ package builders
 		
 		private var _width:int;
 		private var _height:int;
+		private var _bounds:Rectangle;
 		
 		public function get grid():Grid
 		{
@@ -77,6 +79,11 @@ package builders
 			return _xOffset;
 		}
 		
+		public function get bounds():Rectangle
+		{
+			return _bounds;
+		}
+		
 		public function Terrain(world:World, grid:Grid, width:int, height:int, cellSize:int) 
 		{	
 			_tiles = new Array();
@@ -88,6 +95,7 @@ package builders
 			_height = height;
 			_cellSize = cellSize;
 			_xOffset = _grid.rows * _cellSize;
+			_bounds = new Rectangle( -(_grid.rows * _cellSize), 0, width, height);
 		}
 		
 		public function addTile(tile:Entity):void

@@ -25,7 +25,7 @@ package worlds
 	import algorithms.AStar;
 	import generators.TerrainGenerator;
 	
-	import utilities.Camera;
+	import utilities.CameraHelper;
 	import utilities.Point3D;
 	import utilities.IsoUtils;
 	
@@ -57,7 +57,7 @@ package worlds
 		private var _stateMachine:StateMachine;
 		private var _hud:Hud;
 		private var _unitsManager:UnitsManager;
-		private var _camera:Camera;
+		private var _cameraHelper:CameraHelper;
 		private var _selector:Selector;
 		
 		public function getUnitsManager():UnitsManager
@@ -102,14 +102,12 @@ package worlds
 			_selector.layer = 2;
 			_selector.hide();
 			add(_selector);
-			
-			_camera = new Camera(this, new Rectangle( -_terrain.xOffset, 0, _terrain.width, _terrain.height), null);
-			
+					
 			_unitsManager = new UnitsManager(this, _terrain, _messageDispatcher);
 			_unitsManager.createUnits();
 			_unitsManager.focusFirstUnit();
-			_camera = new Camera(this, new Rectangle( -_terrain.xOffset, 0, _terrain.width, _terrain.height), _unitsManager.getUnitInFocus());
-			_camera.focusTarget();
+			_cameraHelper = new CameraHelper(this, _terrain, _unitsManager.getUnitInFocus());
+			_cameraHelper.focusTarget();
 			
 			_hud = new Hud();
 			add(_hud);
@@ -120,7 +118,7 @@ package worlds
 			_unitActionsMenuForm = new UnitActionMenuForm(FP.engine, "Unit's Actions");
 			_unitActionsMenuForm.changeAppearance(UnitActionMenuForm.NORMAL_APPEARANCE);
 			_unitActionsMenuForm.setLocationXY(FP.width - _unitActionsMenuForm.getWidth(), FP.height - _unitActionsMenuForm.getHeight());
-			
+
 			_stateMachine = new StateMachine(this);
 			_stateMachine.setCurrentState(BattleActionSelectionState.getInstance());
 		}
@@ -128,7 +126,7 @@ package worlds
 		override public function update():void
 		{
 			_stateMachine.update();
-			_camera.update();
+			_cameraHelper.update();
 			super.update();
 		}
 
@@ -144,8 +142,8 @@ package worlds
 		{
 			_unitsManager.focusNextUnit();
 			_hud.target = _unitsManager.getUnitInFocus();
-			_camera.target = _unitsManager.getUnitInFocus();
-			_camera.focusTarget();
+			_cameraHelper.target = _unitsManager.getUnitInFocus();
+			_cameraHelper.focusTarget();
 		}
 	}
 }

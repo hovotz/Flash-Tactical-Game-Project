@@ -17,9 +17,9 @@ package forms
 	 */
 	public class UnitActionMenuForm extends JFrame 
 	{
-		public static const NORMAL_APPEARANCE:String = "normal";
-		public static const CANCEL_APPEARANCE:String = "cancel";
-		
+		public static const NORMAL_APPEARANCE:String = "normal_appearance";
+		public static const CANCEL_APPEARANCE:String = "cancel_appearance";
+	
 		private var _panel:JPanel;
 		private var _attackButton:JButton;
 		private var _moveButton:JButton;
