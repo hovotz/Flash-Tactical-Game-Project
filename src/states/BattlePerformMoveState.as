@@ -1,6 +1,7 @@
 package states 
 {
 	import events.UnitEvent;
+	import worlds.CombatWorld;
 	
 	import fsm.State;
 	
@@ -12,7 +13,7 @@ package states
 	{
 		private static var instance:BattlePerformMoveState;
 		
-		private var _agent:*;
+		private var _combatWorld:CombatWorld;
 		
 		public function BattlePerformMoveState(key:SingletonEnforcer) 
 		{
@@ -30,9 +31,9 @@ package states
 		
 		public function enter(agent:*):void
 		{
-			_agent = agent;
-			agent.getUnitActionsMenuForm().hide();
-			agent.getMessageDispatcher().addEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
+			_combatWorld = agent;
+			_combatWorld.getUnitActionsMenuForm().hide();
+			_combatWorld.getMessageDispatcher().addEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
 		}
 		
 		public function update(agent:*):void
@@ -41,13 +42,13 @@ package states
 		
 		public function exit(agent:*):void
 		{
-			agent.getUnitActionsMenuForm().show();
-			agent.getMessageDispatcher().removeEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
+			_combatWorld.getUnitActionsMenuForm().show();
+			_combatWorld.getMessageDispatcher().removeEventListener(UnitEvent.STOP_MOVE, onStopMoveEvent);
 		}
 		
 		private function onStopMoveEvent(ue:UnitEvent):void
 		{
-			_agent.getStateMachine().changeState(BattleActionSelectionState.getInstance());
+			_combatWorld.getStateMachine().changeState(BattleActionSelectionState.getInstance());
 		}
 	}
 }

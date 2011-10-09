@@ -1,6 +1,8 @@
 package states 
 {
+	import events.UnitEvent;
 	import fsm.State;
+	import worlds.CombatWorld;
 	
 	/**
 	 * ...
@@ -9,6 +11,8 @@ package states
 	public class BattlePerformAttackState implements State 
 	{
 		private static var instance:BattlePerformAttackState;
+		
+		private var _combatWorld:CombatWorld;
 		
 		public function BattlePerformAttackState(key:SingletonEnforcer) 
 		{
@@ -26,6 +30,9 @@ package states
 		
 		public function enter(agent:*):void
 		{
+			_combatWorld = agent;
+			_combatWorld.getUnitActionsMenuForm().hide();
+			_combatWorld.getMessageDispatcher().addEventListener(UnitEvent.STOP_ATTACK, onStopAttackEvent);
 		}
 		
 		public function update(agent:*):void
@@ -34,6 +41,13 @@ package states
 		
 		public function exit(agent:*):void
 		{
+			_combatWorld.getUnitActionsMenuForm().show();
+			_combatWorld.getMessageDispatcher().removeEventListener(UnitEvent.STOP_ATTACK, onStopAttackEvent);
+		}
+		
+		private function onStopAttackEvent(ue:UnitEvent):void
+		{
+			_combatWorld.getStateMachine().changeState(BattleActionSelectionState.getInstance());
 		}
 	}
 }

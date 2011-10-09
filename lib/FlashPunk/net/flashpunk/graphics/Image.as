@@ -410,5 +410,16 @@ package net.flashpunk.graphics
 		/** @protected */ protected var _flipped:Boolean;
 		/** @protected */ protected var _flip:BitmapData;
 		/** @protected */ protected static var _flips:Object = { };
+		
+		/* Modification */
+		public function get buffer():BitmapData
+		{
+			return _buffer;
+		}
+		
+		public function set buffer(value:BitmapData):void
+		{
+			_buffer = value;
+		}
 	}
 }

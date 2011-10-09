@@ -1,9 +1,13 @@
 package entities.units
 {
-	import events.MessageDispatcher;
+	import entities.DamagePopUp;
+	import entities.GameEntity;
+	import flash.sampler.NewObjectSample;
+	import messaging.MessageDispatcher;
 	import events.UnitEvent;
 	import flash.events.KeyboardEvent;
 	import flash.geom.Point;
+	import net.flashpunk.graphics.Image;
 	
 	import utilities.Point3D;
 	import utilities.IsoUtils;
@@ -22,73 +26,108 @@ package entities.units
 	 * ...
 	 * @author Jerome Vergara Rosario
 	 */
-	public class Unit extends Entity 
-	{		
-		public static const STAND_DOWN:String 			= "stand_down";
-		public static const STAND_DOWN_LEFT:String 		= "stand_down_left";
-		public static const STAND_LEFT:String 			= "stand_left";
-		public static const STAND_LEFT_UP:String		= "stand_left_up";
-		public static const STAND_UP:String				= "stand_up";
-		public static const STAND_UP_RIGHT:String		= "stand_up_right";
-		public static const STAND_RIGHT:String			= "stand_right";
-		public static const STAND_RIGHT_DOWN:String 	= "stand_right_down";
+	public class Unit extends GameEntity
+	{
+		public static const STANDING:String		= "standing";
+		public static const DEAD:String			= "dead";
+		public static const RUNNING:String		= "running";
+		public static const JUMPING:String		= "jump";
+		public static const ATTACKING:String	= "attack";
 		
-		public static const RUN_DOWN:String				= "run_down";
-		public static const RUN_DOWN_LEFT:String		= "run_down_left";
-		public static const RUN_LEFT:String				= "run_left";
-		public static const RUN_LEFT_UP:String			= "run_left_up";
-		public static const RUN_UP:String				= "run_up";
-		public static const RUN_UP_RIGHT:String			= "run_up_right";
-		public static const RUN_RIGHT:String			= "run_right";
-		public static const RUN_RIGHT_DOWN:String		= "run_right_down";
+		public static const DOWN:String 		= "down";
+		public static const DOWN_LEFT:String 	= "down_left";
+		public static const LEFT:String 		= "left";
+		public static const LEFT_UP:String 		= "left_up";
+		public static const UP:String 			= "up";
+		public static const UP_RIGHT:String		= "up_right";
+		public static const RIGHT:String		= "right";
+		public static const RIGHT_DOWN:String	= "right_down";
 		
-		public static const JUMP_DOWN:String			= "jump_down";
-		public static const JUMP_DOWN_LEFT:String		= "jump_down_left";
-		public static const JUMP_LEFT:String			= "jump_left";
-		public static const JUMP_LEFT_UP:String			= "jump_left_up";
-		public static const JUMP_UP:String				= "jump_up";
-		public static const JUMP_UP_RIGHT:String		= "jump_up_right";
-		public static const JUMP_RIGHT:String			= "jump_right";
-		public static const JUMP_RIGHT_DOWN:String 		= "jump_right_down";
+		public static const HP:String 		= "hp";
+		public static const MAX_HP:String 	= "max_hp";
+		public static const MP:String 		= "mp";
+		public static const MAX_MP:String 	= "max_mp";
 		
-		public static const ATTACK_DOWN:String			= "attack_down";
-		public static const ATTACK_DOWN_LEFT:String		= "attack_down_left";
-		public static const ATTACK_LEFT:String			= "attack_left";
-		public static const ATTACK_LEFT_UP:String		= "attack_left_up";
-		public static const ATTACK_UP:String			= "attack_up";
-		public static const ATTACK_UP_RIGHT:String		= "attack_up_right";
-		public static const ATTACK_RIGHT:String			= "attack_right";
-		public static const ATTACK_RIGHT_DOWN:String 	= "attack_right_down";
-		
-		private var _terrain:Terrain;
+		protected var _terrain:Terrain;
 		private var _messageDispatcher:MessageDispatcher;
 		
-		private var _currentAnimation:String = Unit.STAND_DOWN;
+		protected var _currentAnimation:String;
 		private var _path:Array;
-		private var _isWalking:Boolean = false;
 		private var _destX:int;
 		private var _destY:int;
-		private var _walkingSpeed:Number = 3;
+		private var _walkingSpeed:int = 180; // in seconds
+		
+		private var _isWalking:Boolean 		= false;
+		private var _isAttacking:Boolean 	= false;
+		private var _isDead:Boolean 		= false;
 		
 		protected var _spritemap:Spritemap;
 		protected var _spriteWidth:Number = 50;
 		protected var _spriteHeight:Number = 50;
 		
-		protected var _className:String;
-		protected var _hp:int;
-		protected var _curHp:int;
-		protected var _mp:int;
-		protected var _curMp:int;
-		protected var _movement:int;
+		private var _picture:Image;
+		private var _className:String;
+		private var _maxHp:int;
+		private var _hp:int;
+		private var _maxMp:int;
+		private var _mp:int;
+		private var _movementRange:int;
+		private var _attackRange:int;
+		
+		private var _animationState:String;
+		private var _direction:String;
+		
+		public static function getAnimationName(animationState:String, direction:String):String
+		{
+			return animationState + "_" + direction;
+		}
+		
+		public function setCurrentAnimation(animationState:String, direction:String):void
+		{
+			_animationState = animationState;
+			_direction = direction;
+			_currentAnimation = getAnimationName(animationState, direction);
+		}
+		
+		public function set picture(value:Image):void
+		{
+			_picture = value;
+		}
+		
+		public function get picture():Image
+		{
+			return _picture;
+		}
 		
 		public function isWalking():Boolean
 		{
 			return _isWalking;
 		}
 		
+		public function isDead():Boolean
+		{
+			return _isDead;
+		}
+		
 		public function get className():String
 		{
 			return _className;
+		}
+		
+		public function set className(value:String):void
+		{
+			_className = value;
+		}
+		
+		public function get maxHp():int
+		{
+			return _maxHp;
+		}
+		
+		public function set maxHp(value:int):void
+		{
+			_maxHp = value;
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.ATTRIBUTE_CHANGE, this, Unit.MAX_HP));
 		}
 		
 		public function get hp():int
@@ -99,16 +138,25 @@ package entities.units
 		public function set hp(value:int):void
 		{
 			_hp = value;
+			if (_hp <= 0) {
+				_hp = 0;
+				playAnimation(DEAD);
+				_isDead = true;
+			} else if (_hp > _maxHp) {
+				_hp = _maxHp;
+			}
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.ATTRIBUTE_CHANGE, this, Unit.HP));
 		}
 		
-		public function get curHp():int
+		public function get maxMp():int
 		{
-			return _curHp;
+			return _maxMp;
 		}
 		
-		public function set curHp(value:int):void
+		public function set maxMp(value:int):void
 		{
-			_curHp = value;
+			_maxMp = value;
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.ATTRIBUTE_CHANGE, this, Unit.MAX_MP));
 		}
 		
 		public function get mp():int
@@ -119,285 +167,27 @@ package entities.units
 		public function set mp(value:int):void
 		{
 			_mp = value;
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.ATTRIBUTE_CHANGE, this, Unit.MP));
 		}
 		
-		public function get curMp():int
+		public function get movementRange():int
 		{
-			return _curMp;
+			return _movementRange;
 		}
 		
-		public function set curMp(value:int):void
+		public function set movementRange(value:int):void
 		{
-			_curMp = value;
+			_movementRange = value;
 		}
 		
-		public function get movement():int
+		public function get attackRange():int
 		{
-			return _movement;
+			return _attackRange;
 		}
 		
-		public function set movement(value:int):void
+		public function set attackRange(value:int):void
 		{
-			_movement = value;
-		}
-		
-		public function Unit(source:*, position:Point, messageDispatcher:MessageDispatcher) 
-		{	
-			_spritemap = new Spritemap(source, _spriteWidth, _spriteHeight);
-			_spritemap.callback = animationCallback;
-			// top view settings
-			//_spritemap.x = -10;
-			//_spritemap.y = -20;
-
-			// isometric view settings
-			_spritemap.x = -25;
-			_spritemap.y = -20;
-			
-			setupSpritemap();
-			graphic = _spritemap;
-			_spritemap.play(_currentAnimation);
-			x = position.x;
-			y = position.y;
-			
-			//setHitbox(_spriteWidth, _spriteHeight, 10, 20);
-			setHitbox(_spriteWidth, _spriteHeight, 25, 20);
-			
-			_messageDispatcher = messageDispatcher;
-		}
-		
-		public function setupSpritemap():void
-		{
-			_spritemap.add(Unit.STAND_DOWN, 		[16], 0, false);
-			_spritemap.add(Unit.STAND_DOWN_LEFT, 	[17], 0, false);
-			_spritemap.add(Unit.STAND_LEFT, 		[18], 0, false);
-			_spritemap.add(Unit.STAND_LEFT_UP,		[19], 0, false);
-			_spritemap.add(Unit.STAND_UP, 			[20], 0, false);
-			_spritemap.add(Unit.STAND_UP_RIGHT,		[21], 0, false);
-			_spritemap.add(Unit.STAND_RIGHT, 		[22], 0, false);
-			_spritemap.add(Unit.STAND_RIGHT_DOWN,	[23], 0, false);
-			
-			_spritemap.add(Unit.RUN_DOWN, 			[24, 32, 40, 48], 9, true);
-			_spritemap.add(Unit.RUN_DOWN_LEFT, 		[25, 33, 41, 49], 9, true);
-			_spritemap.add(Unit.RUN_LEFT, 			[26, 34, 42, 50], 9, true);
-			_spritemap.add(Unit.RUN_LEFT_UP, 		[27, 35, 43, 51], 9, true);
-			_spritemap.add(Unit.RUN_UP, 			[28, 36, 44, 52], 9, true);
-			_spritemap.add(Unit.RUN_UP_RIGHT,		[29, 37, 45, 53], 9, true);
-			_spritemap.add(Unit.RUN_RIGHT, 			[30, 38, 46, 54], 9, true);
-			_spritemap.add(Unit.RUN_RIGHT_DOWN,		[31, 39, 47, 55], 9, true);
-			
-			_spritemap.add(Unit.JUMP_DOWN, 			[64, 56, 64], 9, true);
-			_spritemap.add(Unit.JUMP_DOWN_LEFT, 	[65, 57, 65], 9, true);
-			_spritemap.add(Unit.JUMP_LEFT, 			[66, 58, 66], 9, true);
-			_spritemap.add(Unit.JUMP_LEFT_UP, 		[67, 59, 67], 9, true);
-			_spritemap.add(Unit.JUMP_UP, 			[68, 60, 68], 9, true);
-			_spritemap.add(Unit.JUMP_UP_RIGHT,		[69, 61, 69], 9, true);
-			_spritemap.add(Unit.JUMP_RIGHT, 		[70, 62, 70], 9, true);
-			_spritemap.add(Unit.JUMP_RIGHT_DOWN,	[71, 63, 71], 9, true);
-			
-			_spritemap.add(Unit.ATTACK_DOWN, 		[128, 136, 144, 152, 160, 168], 15, false);
-			_spritemap.add(Unit.ATTACK_DOWN_LEFT, 	[129, 137, 145, 153, 161, 169], 15, false);
-			_spritemap.add(Unit.ATTACK_LEFT, 		[130, 138, 146, 154, 162, 170], 15, false);
-			_spritemap.add(Unit.ATTACK_LEFT_UP, 	[131, 139, 147, 155, 163, 171], 15, false);
-			_spritemap.add(Unit.ATTACK_UP, 			[132, 140, 148, 156, 164, 172], 15, false);
-			_spritemap.add(Unit.ATTACK_UP_RIGHT,	[133, 141, 149, 157, 165, 173], 15, false);
-			_spritemap.add(Unit.ATTACK_RIGHT, 		[134, 142, 150, 158, 166, 174], 15, false);
-			_spritemap.add(Unit.ATTACK_RIGHT_DOWN,	[135, 143, 151, 159, 167, 175], 15, false);
-		}
-		
-		private function setCurrentAnimationBaseOnDirection(deltaX:Number, deltaY:Number):void
-		{
-			if (deltaX == 0 && deltaY > 0)
-			{
-				_currentAnimation = Unit.RUN_DOWN;
-			}
-			if (deltaX < 0 && deltaY > 0)
-			{
-				_currentAnimation = Unit.RUN_DOWN_LEFT;
-			}
-			if (deltaX < 0 && deltaY == 0)
-			{
-				_currentAnimation = Unit.RUN_LEFT;
-			}
-			if (deltaX < 0 && deltaY < 0)
-			{
-				_currentAnimation = Unit.RUN_LEFT_UP;
-			}
-			if (deltaX == 0 && deltaY < 0)
-			{
-				_currentAnimation = Unit.RUN_UP;
-			}
-			if (deltaX > 0 && deltaY < 0)
-			{
-				_currentAnimation = Unit.RUN_UP_RIGHT;
-			}
-			if (deltaX > 0 && deltaY == 0)
-			{
-				_currentAnimation = Unit.RUN_RIGHT;
-			}
-			if (deltaX > 0 && deltaY > 0)
-			{
-				_currentAnimation = Unit.RUN_RIGHT_DOWN;
-			}
-		}
-		
-		private function stopRunning():void
-		{
-			switch (_currentAnimation)
-			{
-				case Unit.RUN_DOWN:
-					_currentAnimation = Unit.STAND_DOWN;
-					break;
-					
-				case Unit.RUN_DOWN_LEFT:
-					_currentAnimation = Unit.STAND_DOWN_LEFT;
-					break;
-					
-				case Unit.RUN_LEFT: 
-					_currentAnimation = Unit.STAND_LEFT;
-					break;
-					
-				case Unit.RUN_LEFT_UP: 
-					_currentAnimation = Unit.STAND_LEFT_UP;
-					break;
-
-				case Unit.RUN_UP:
-					_currentAnimation = Unit.STAND_UP;
-					break;
-					
-				case Unit.RUN_UP_RIGHT:
-					_currentAnimation = Unit.STAND_UP_RIGHT;
-					break;
-					
-				case Unit.RUN_RIGHT:
-					_currentAnimation = Unit.STAND_RIGHT;
-					break;
-					
-				case Unit.RUN_RIGHT_DOWN:
-					_currentAnimation = Unit.STAND_RIGHT_DOWN;
-					break;
-			}
-		}
-		
-		public function playAttackAnimation():void
-		{
-			switch (_currentAnimation)
-			{
-				case Unit.STAND_DOWN:
-					_currentAnimation = Unit.ATTACK_DOWN;
-					break;
-					
-				case Unit.STAND_DOWN_LEFT:
-					_currentAnimation = Unit.ATTACK_DOWN_LEFT;
-					break;
-					
-				case Unit.STAND_LEFT: 
-					_currentAnimation = Unit.ATTACK_LEFT;
-					break;
-					
-				case Unit.STAND_LEFT_UP: 
-					_currentAnimation = Unit.ATTACK_LEFT_UP;
-					break;
-
-				case Unit.STAND_UP:
-					_currentAnimation = Unit.ATTACK_UP;
-					break;
-					
-				case Unit.STAND_UP_RIGHT:
-					_currentAnimation = Unit.ATTACK_UP_RIGHT;
-					break;
-					
-				case Unit.STAND_RIGHT:
-					_currentAnimation = Unit.ATTACK_RIGHT;
-					break;
-					
-				case Unit.STAND_RIGHT_DOWN:
-					_currentAnimation = Unit.ATTACK_RIGHT_DOWN;
-					break;
-			}
-		}
-		
-		public function playJumpAnimation():void
-		{
-			switch (_currentAnimation)
-			{
-				case Unit.STAND_DOWN:
-					_currentAnimation = Unit.JUMP_DOWN;
-					break;
-					
-				case Unit.STAND_DOWN_LEFT:
-					_currentAnimation = Unit.JUMP_DOWN_LEFT;
-					break;
-					
-				case Unit.STAND_LEFT: 
-					_currentAnimation = Unit.JUMP_LEFT;
-					break;
-					
-				case Unit.STAND_LEFT_UP: 
-					_currentAnimation = Unit.JUMP_LEFT_UP;
-					break;
-
-				case Unit.STAND_UP:
-					_currentAnimation = Unit.JUMP_UP;
-					break;
-					
-				case Unit.STAND_UP_RIGHT:
-					_currentAnimation = Unit.JUMP_UP_RIGHT;
-					break;
-					
-				case Unit.STAND_RIGHT:
-					_currentAnimation = Unit.JUMP_RIGHT;
-					break;
-					
-				case Unit.STAND_RIGHT_DOWN:
-					_currentAnimation = Unit.JUMP_RIGHT_DOWN;
-					break;
-			}
-		}
-		
-		private function animationCallback():void
-		{
-			switch (_currentAnimation)
-			{
-				case Unit.ATTACK_DOWN:
-				case Unit.JUMP_DOWN:
-					_currentAnimation = Unit.STAND_DOWN;
-					break;
-					
-				case Unit.ATTACK_DOWN_LEFT:
-				case Unit.JUMP_DOWN_LEFT:
-					_currentAnimation = Unit.STAND_DOWN_LEFT;
-					break;
-					
-				case Unit.ATTACK_LEFT:
-				case Unit.JUMP_LEFT:
-					_currentAnimation = Unit.STAND_LEFT;
-					break;
-					
-				case Unit.ATTACK_LEFT_UP:
-				case Unit.JUMP_LEFT_UP:
-					_currentAnimation = Unit.STAND_LEFT_UP;
-					break;
-
-				case Unit.ATTACK_UP:
-				case Unit.JUMP_UP:
-					_currentAnimation = Unit.STAND_UP;
-					break;
-					
-				case Unit.ATTACK_UP_RIGHT:
-				case Unit.JUMP_UP_RIGHT:
-					_currentAnimation = Unit.STAND_UP_RIGHT;
-					break;
-					
-				case Unit.ATTACK_RIGHT:
-				case Unit.JUMP_RIGHT:
-					_currentAnimation = Unit.STAND_RIGHT;
-					break;
-					
-				case Unit.ATTACK_RIGHT_DOWN:
-				case Unit.JUMP_RIGHT_DOWN:
-					_currentAnimation = Unit.STAND_RIGHT_DOWN;
-					break;
-			}
+			_attackRange = value;
 		}
 		
 		public function set terrain(value:Terrain):void
@@ -413,6 +203,103 @@ package entities.units
 		public function get path():Array
 		{
 			return _path;
+		}
+		
+		public function Unit(source:*, id:int, position:Point) 
+		{
+			super(id);
+			_spritemap = new Spritemap(source, _spriteWidth, _spriteHeight);
+			_spritemap.callback = animationCallback;
+			_spritemap.x = -25;
+			_spritemap.y = -20;
+			
+			setupSpritemap();
+			graphic = _spritemap;
+			setCurrentAnimation(STANDING, DOWN);
+			_spritemap.play(_currentAnimation);
+			x = position.x;
+			y = position.y;
+			
+			setHitbox(_spriteWidth, _spriteHeight, 25, 20);
+			
+			_messageDispatcher = MessageDispatcher.getInstance();
+		}
+		
+		public function setupSpritemap():void
+		{
+			setupStandingAnimations();
+			setupRunningAnimations();
+			setupJumpingAnimations();
+			setupAttackingAnimations();
+			setupDeadAnimations();
+		}
+		
+		public function setupStandingAnimations():void
+		{		
+			_spritemap.add(getAnimationName(STANDING, DOWN),		[16], 0, false);
+			_spritemap.add(getAnimationName(STANDING, DOWN_LEFT),	[17], 0, false);
+			_spritemap.add(getAnimationName(STANDING, LEFT),		[18], 0, false);
+			_spritemap.add(getAnimationName(STANDING, LEFT_UP),		[19], 0, false);
+			_spritemap.add(getAnimationName(STANDING, UP),			[20], 0, false);
+			_spritemap.add(getAnimationName(STANDING, UP_RIGHT),	[21], 0, false);
+			_spritemap.add(getAnimationName(STANDING, RIGHT),		[22], 0, false);
+			_spritemap.add(getAnimationName(STANDING, RIGHT_DOWN),	[23], 0, false);
+		}
+		
+		public function setupRunningAnimations():void
+		{
+			_spritemap.add(getAnimationName(RUNNING, DOWN),			[24, 32, 40, 48], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, DOWN_LEFT),	[25, 33, 41, 49], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, LEFT),			[26, 34, 42, 50], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, LEFT_UP),		[27, 35, 43, 51], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, UP),			[28, 36, 44, 52], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, UP_RIGHT),		[29, 37, 45, 53], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, RIGHT),		[30, 38, 46, 54], 9, true);
+			_spritemap.add(getAnimationName(RUNNING, RIGHT_DOWN),	[31, 39, 47, 55], 9, true);
+		}
+		
+		public function setupJumpingAnimations():void
+		{
+			_spritemap.add(getAnimationName(JUMPING, DOWN),			[64, 56, 64], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, DOWN_LEFT),	[65, 57, 65], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, LEFT),			[66, 58, 66], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, LEFT_UP),		[67, 59, 67], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, UP),			[68, 60, 68], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, UP_RIGHT),		[69, 61, 69], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, RIGHT),		[70, 62, 70], 9, true);
+			_spritemap.add(getAnimationName(JUMPING, RIGHT_DOWN),	[71, 63, 71], 9, true);
+		}
+		
+		public function setupAttackingAnimations():void
+		{
+			_spritemap.add(getAnimationName(ATTACKING, DOWN), 		[128, 136, 144, 152, 160, 168], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, DOWN_LEFT), 	[129, 137, 145, 153, 161, 169], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, LEFT), 		[130, 138, 146, 154, 162, 170], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, LEFT_UP),	[131, 139, 147, 155, 163, 171], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, UP),			[132, 140, 148, 156, 164, 172], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, UP_RIGHT),	[133, 141, 149, 157, 165, 173], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, RIGHT), 		[134, 142, 150, 158, 166, 174], 15, false);
+			_spritemap.add(getAnimationName(ATTACKING, RIGHT_DOWN),	[135, 143, 151, 159, 167, 175], 15, false);
+		}
+		
+		public function setupDeadAnimations():void
+		{
+		}
+		
+		private function playAnimation(animationState:String):void
+		{
+			setCurrentAnimation(animationState, _direction);
+		}
+				
+		private function animationCallback():void
+		{
+			playAnimation(STANDING);
+
+			if (_isAttacking == true)
+			{
+				_isAttacking = false;
+				_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.STOP_ATTACK));
+			}
 		}
 		
 		public function startWalkByPath():void
@@ -441,14 +328,36 @@ package entities.units
 			}
 		}
 		
+		public function getDirectionNameFromVector(deltaX:Number, deltaY:Number):String
+		{
+			var name:String;
+			
+			if (deltaX == 0 && deltaY > 0)
+				name = DOWN;
+			else if (deltaX < 0 && deltaY > 0)
+				name = DOWN_LEFT;
+			else if (deltaX < 0 && deltaY == 0)
+				name = LEFT;
+			else if (deltaX < 0 && deltaY < 0)
+				name = LEFT_UP;
+			else if (deltaX == 0 && deltaY < 0)
+				name = UP;
+			else if (deltaX > 0 && deltaY < 0)
+				name = UP_RIGHT;
+			else if (deltaX > 0 && deltaY == 0)
+				name = RIGHT;
+			else if (deltaX > 0 && deltaY > 0)
+				name = RIGHT_DOWN;
+
+			return name;
+		}
+		
 		private function walkTo(deltaX:Number, deltaY:Number):void
 		{
-			setCurrentAnimationBaseOnDirection(deltaX, deltaY);
+			setCurrentAnimation(RUNNING, getDirectionNameFromVector(deltaX, deltaY));
 			
-			if (_isWalking != true)
-			{
+			if (!_isWalking)
 				_isWalking = true;
-			}
 		}
 		
 		private function walking():void
@@ -456,10 +365,10 @@ package entities.units
 			var remainX:int = _destX - this.x;
 			var remainY:int = _destY - this.y;
 			var remainLength:Number = Math.sqrt(remainX * remainX + remainY * remainY);
-			if (remainLength > _walkingSpeed)
+			if (remainLength > (_walkingSpeed * FP.elapsed))
 			{
-				this.x += remainX / remainLength * _walkingSpeed;
-				this.y += remainY / remainLength * _walkingSpeed;
+				this.x += remainX / remainLength * (_walkingSpeed * FP.elapsed);
+				this.y += remainY / remainLength * (_walkingSpeed * FP.elapsed);
 			}
 			else
 			{
@@ -480,10 +389,33 @@ package entities.units
 		private function stopWalk():void
 		{
 			var unitPositionInIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(this.x, this.y));
-			_terrain.setOccupied(unitPositionInIsometricSpace.x / _terrain.cellSize, unitPositionInIsometricSpace.z / _terrain.cellSize, true);
-			stopRunning();
+			var col:int = unitPositionInIsometricSpace.x / _terrain.cellSize;
+			var row:int = unitPositionInIsometricSpace.z / _terrain.cellSize;
+			_terrain.setOccupied(col, row, true);
+			_terrain.getNode(col, row).occupiedBy = this;
+			playAnimation(STANDING);
 			_isWalking = false;
 			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.STOP_MOVE));
+		}
+		
+		public function attack(unit:Unit):void
+		{
+			var deltaX:int = unit.x - x;
+			var deltaY:int = unit.y - y;
+			_messageDispatcher.dispatchEvent(new UnitEvent(UnitEvent.START_ATTACK));
+			attackTo(deltaX, deltaY);
+		
+			unit.hp -= 1;
+			var damagePopUp:DamagePopUp = new DamagePopUp(unit.x, unit.y, 1);
+			world.add(damagePopUp);
+		}
+		
+		public function attackTo(deltaX:int, deltaY:int):void
+		{
+			setCurrentAnimation(ATTACKING, getDirectionNameFromVector(deltaX, deltaY));
+			
+			if (!_isAttacking)
+				_isAttacking = true;
 		}
 		
 		override public function update():void

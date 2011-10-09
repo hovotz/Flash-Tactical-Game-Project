@@ -1,5 +1,6 @@
 package graph 
 {
+	import entities.units.Unit;
 	/**
 	 * ...
 	 * @author Jerome Vergara Rosario
@@ -14,6 +15,7 @@ package graph
 		public var h:Number;
 		public var walkable:Boolean = true;
 		public var occupied:Boolean = false;
+		public var occupiedBy:Unit = null;
 		public var highlighted:Boolean = false;
 		public var parent:Node;
 		public var costMultiplier:Number = 1.0;

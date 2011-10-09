@@ -1,31 +1,52 @@
-package worlds
+package worlds 
 {
-	import com.hovotz.utilities.TerrainGenerator;
-	import flash.display.InteractiveObject;
-	import flash.events.KeyboardEvent;
+	import events.SelectorEvent;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import net.flashpunk.graphics.Text;
+	import org.aswing.border.EmptyBorder;
+	import org.aswing.event.TableModelListener;
 	
-	import net.flashpunk.Entity;
-	import net.flashpunk.graphics.Tilemap;
+	import forms.UnitActionMenuForm;
+	
+	import org.aswing.*;
+	import org.aswing.geom.IntDimension;
+	
+	import managers.UnitManager;
+	
+	import net.flashpunk.FP;
 	import net.flashpunk.World;
+	import net.flashpunk.Entity;
+	import net.flashpunk.graphics.Image;
 	import net.flashpunk.utils.Input;
 	import net.flashpunk.utils.Key;
-	import net.flashpunk.FP;
-	import net.flashpunk.graphics.Image;
 	
-	import entities.units.Unit;
-	import entities.units.Swordman;
-	import entities.units.Dragon;
-	import entities.units.Archer;
-	import entities.units.Ninja;
-	import entities.units.Sorceror;
-	import entities.units.Witch;
+	import graph.Node;
+	import graph.Grid;
+	import algorithms.AStar;
+	import generators.TerrainGenerator;
 	
-	import utilities.cameras.Camera;
-	import utilities.builders.Terrain;
-	import utilities.builders.TerrainBuilder;
-	import utilities.builders.TilemapTerrainBuilderStrategy;
+	import utilities.CameraHelper;
+	import utilities.Point3D;
+	import utilities.IsoUtils;
+	
+	import builders.Terrain;
+	import builders.TerrainBuilder;
+	import builders.IsomapTerrainBuilderStrategy;
+	
+	import entities.huds.HudController;
+	import entities.Bar;
+	import entities.Selector;
+	import entities.Highlight;
+	
+	import messaging.MessageDispatcher;
+	import events.UnitEvent;
+	
+	import fsm.*;
+	
+	import states.BattleActionSelectionState;
 	
 	/**
 	 * ...
@@ -33,148 +54,134 @@ package worlds
 	 */
 	public class CombatWorld extends World 
 	{
-		private var _units:Array;
-		private var _inFocus:Unit;
 		private var _terrain:Terrain;
-		private var _camera:Camera;
+		private var _messageDispatcher:MessageDispatcher;
+		private var _unitActionsMenuForm:UnitActionMenuForm;
+		private var _stateMachine:StateMachine;
+		private var _hudController:HudController;
+		private var _unitManager:UnitManager;
+		private var _cameraHelper:CameraHelper;
+		private var _selector:Selector;
+		
+		public function getUnitManager():UnitManager
+		{
+			return _unitManager;
+		}
+		
+		public function getMessageDispatcher():MessageDispatcher
+		{
+			return _messageDispatcher;
+		}
+		
+		public function getTerrain():Terrain
+		{
+			return _terrain;
+		}
+		
+		public function getSelector():Selector
+		{
+			return _selector;
+		}
+		
+		public function getStateMachine():StateMachine
+		{
+			return _stateMachine;
+		}
+		
+		public function getUnitActionsMenuForm():UnitActionMenuForm
+		{
+			return _unitActionsMenuForm;
+		}
 		
 		public function CombatWorld() 
 		{
-			_units = new Array();
-			
-			var terrainBuilder:TerrainBuilder = new TerrainBuilder(new TilemapTerrainBuilderStrategy());
+			Text.font = "Arial Font";
+			var terrainBuilder:TerrainBuilder = new TerrainBuilder(new IsomapTerrainBuilderStrategy());
 			var terrainGenerator:TerrainGenerator = new TerrainGenerator();
-			_terrain = terrainBuilder.build(this, terrainGenerator.generate(100, 100), 30);
-			addTerrain(_terrain);
+			_terrain = terrainBuilder.build(this, terrainGenerator.generate(50, 50), 30);
 			
-			//_terrain = new Terrain(100, 100, 30);
-			//add(_terrain);
+			_messageDispatcher = MessageDispatcher.getInstance();
+
+			_selector = new Selector(this, _terrain);
+			_selector.layer = 2;
+			add(_selector);
+					
+			_unitManager = new UnitManager(this, _terrain);
 			
+			_cameraHelper = new CameraHelper(this, _terrain, _unitManager.getActiveUnit());
+			_cameraHelper.focusTarget();
+			
+			_hudController = new HudController();
+			add(_hudController);
+			_hudController.setActiveUnit(_unitManager.getActiveUnit());
+			
+			AsWingManager.setRoot(FP.engine);
+			
+			_unitActionsMenuForm = new UnitActionMenuForm(FP.engine, "Unit's Actions");
+			_unitActionsMenuForm.changeAppearance(UnitActionMenuForm.NORMAL_APPEARANCE);
+			_unitActionsMenuForm.setLocationXY(FP.width - _unitActionsMenuForm.getWidth(), FP.height - _unitActionsMenuForm.getHeight());
+			_unitActionsMenuForm.addEventListener(MouseEvent.MOUSE_OVER, onMouseOverEvent);
+			_unitActionsMenuForm.addEventListener(MouseEvent.MOUSE_OUT, onMouseOutEvent);
 
-			createUnits();
-
-			_inFocus = _units[0];
-			_camera = new Camera(this, new Rectangle(0, 0, _terrain.width, _terrain.height), _inFocus);
-			_camera.focusTarget();
+			_stateMachine = new StateMachine(this);
+			_stateMachine.setCurrentState(BattleActionSelectionState.getInstance());
+			
+			_messageDispatcher.addEventListener(SelectorEvent.SELECTOR_ROLLOVER, onSelectorRollOverEvent);
 		}
 		
-		private function addTerrain(terrain:Terrain):void
+		private function onSelectorRollOverEvent(se:SelectorEvent):void
 		{
-			var entities:Array = terrain.entities;
-			
-			for (var i:int = 0; i < entities.length; i++)
+			switch (se.cellState)
 			{
-				add(entities[i]);
+				case Selector.OCCUPIED:
+					_hudController.setTargetUnit(se.node.occupiedBy);
+					break;
+					
+				case Selector.EMPTY:
+					_hudController.setTargetUnit(null);
+					break;
 			}
 		}
 		
 		override public function update():void
 		{
-			if (Input.pressed(Key.TAB))
-			{
-				switchUnit();
-				_camera.target = _inFocus;
-				_camera.focusTarget();
-			}
-			
-			if (Input.mousePressed)
-			{
-				var startCol:int = _inFocus.x / _terrain.cellSize;
-				var startRow:int = _inFocus.y / _terrain.cellSize;
-				var endCol:int = (this.camera.x + Input.mouseX) / _terrain.cellSize;
-				var endRow:int = (this.camera.y + Input.mouseY) / _terrain.cellSize;
-				
-				if (_terrain.isOccupied(endCol, endRow))
-				{
-					_terrain.setOccupied(endCol, endRow, false);
-					if (_terrain.findPath(startCol, startRow, endCol, endRow))
-					{
-						_inFocus.path = _terrain.path;
-						_inFocus.path.pop();
-						_terrain.setOccupied(endCol, endRow, true);
-						_inFocus.startWalkByPath();
-					}
-					else
-					{
-						trace("Unreachable cell!");
-					}
-				}
-				else if (_terrain.isWalkable(endCol, endRow))
-				{
-					if (_terrain.findPath(startCol, startRow, endCol, endRow))
-					{
-						_inFocus.path = _terrain.path;
-						_inFocus.startWalkByPath();
-					}
-					else
-					{
-						trace("Unreachable cell!");
-					}
-				}
-				else
-				{
-					trace("tile is unwalkable");
-				}
-			}
-
-			//_inFocus.inFocusUpdate();
-			_camera.followTarget();
+			_stateMachine.update();
+			_cameraHelper.update();
 			super.update();
 		}
 		
-		private function switchUnit():void
+		public function highlightActiveUnitAttackRange():void
 		{
-			var currentIndex:int = _units.indexOf(_inFocus);
-			currentIndex++;
-			currentIndex %= _units.length;
-			_inFocus = _units[currentIndex];
+			var unitPositionInIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_unitManager.getActiveUnit().x, _unitManager.getActiveUnit().y));
+			var unitCol:int = unitPositionInIsometricSpace.x / _terrain.cellSize;
+			var unitRow:int = unitPositionInIsometricSpace.z / _terrain.cellSize;
+			_terrain.highlightCells(_terrain.getAttackRangeNodes(unitCol, unitRow, _unitManager.getActiveUnit().attackRange));
 		}
 		
-		private function createUnits():void
+		public function highlightActiveUnitMovementRange():void
 		{
-
-			var unit:Unit = new Swordman(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Dragon(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Archer(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Ninja(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Sorceror(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
-			
-			unit = new Witch(generateValidPosition());
-			unit.terrain = _terrain;
-			add(unit);
-			_units.push(unit);
+			var unitPositionInIsometricSpace:Point3D = IsoUtils.screenToIso(new Point(_unitManager.getActiveUnit().x, _unitManager.getActiveUnit().y));
+			var unitCol:int = unitPositionInIsometricSpace.x / _terrain.cellSize;
+			var unitRow:int = unitPositionInIsometricSpace.z / _terrain.cellSize;
+			_terrain.highlightCells(_terrain.getMovementRangeNodes(unitCol, unitRow, _unitManager.getActiveUnit().movementRange));
+		}
+				
+		public function gotoNextUnit():void
+		{
+			_unitManager.setActiveUnit(UnitManager.NEXT_UNIT);
+			_hudController.setActiveUnit( _unitManager.getActiveUnit());
+			_cameraHelper.target = _unitManager.getActiveUnit();
+			_cameraHelper.focusTarget();
 		}
 		
-		private function generateValidPosition():Point
+		private function onMouseOverEvent(me:MouseEvent):void
 		{
-			var valid:Boolean = false;
-			while (!valid)
-			{
-				var pCol:int = Math.random() * _terrain.cols;
-				var pRow:int = Math.random() * _terrain.rows;
-				valid = _terrain.isWalkable(pCol, pRow);
-			}
-			_terrain.setOccupied(pCol, pRow, true);
-			return new Point(pCol * _terrain.cellSize, pRow * _terrain.cellSize);
+			_selector.hide();
+		}
+		
+		private function onMouseOutEvent(me:MouseEvent):void
+		{
+			_selector.show();
 		}
 	}
 }

@@ -22,19 +22,15 @@ package builders
 	public class Terrain 
 	{
 		private var _world:World;
-		
 		private var _tiles:Array;
 		private var _highlightedCells:Array;
 		private var _highlightedNodes:Array;
-		
 		private var _astar:AStar;
 		private var _grid:Grid;
-		
 		private var _cols:int;
 		private var _rows:int;
 		private var _cellSize:int;
 		private var _xOffset:int;
-		
 		private var _width:int;
 		private var _height:int;
 		private var _bounds:Rectangle;
@@ -137,6 +133,7 @@ package builders
 		public function findPath(startCol:int, startRow:int, endCol:int, endRow:int):Boolean
 		{
 			_grid.setOccupied(startCol, startRow, false);
+			_grid.getNode(startCol, startRow).occupiedBy = null;
 			_grid.setEndNode(endCol, endRow);
 			_grid.setStartNode(startCol, startRow);
 			
@@ -144,10 +141,42 @@ package builders
 			return _astar.findPath(_grid);
 		}
 		
-		public function highlightCells(col:int, row:int, distance:int):void
+		public function getAttackRangeNodes(col:int, row:int, range:int):Array
+		{
+			var nodes:Array = new Array();
+			var startX:int = Math.max(0, col - range);
+			var endX:int = Math.min(_cols - 1, col + range);
+			var startY:int = Math.max(0, row - range);
+			var endY:int = Math.min(_rows - 1, row + range);
+			for (var i:int = startX; i <= endX; i++)
+			{
+				for (var j:int = startY; j <= endY; j++)
+				{
+					if (_grid.isWalkable(i, j) || _grid.isOccupied(i, j))
+					{
+						if (col == i && row == j)
+							continue;
+						
+						var dC:int = Math.abs(i - col);
+						var dR:int = Math.abs(j - row);
+						
+						if (dC == 0 || dR == 0 || (dC == dR && (dC * Math.SQRT2) < range))	
+							nodes.push(_grid.getNode(i, j));
+					}
+				}
+			}
+			return nodes;
+		}
+		
+		public function getMovementRangeNodes(col:int, row:int, movement:int):Array
 		{
 			var astar:AStar = new AStar();
-			_highlightedNodes = astar.findMovementRange(col, row, distance, grid);
+			return astar.findMovementRange(col, row, movement, grid);
+		}
+		
+		public function highlightCells(nodes:Array):void
+		{
+			_highlightedNodes = nodes;
 			_highlightedCells = new Array();
 			for (var i:int = 0; i < _highlightedNodes.length; i++)
 			{
@@ -176,6 +205,11 @@ package builders
 		public function get path():Array
 		{
 			return _astar.path;
+		}
+		
+		public function getNode(col:int, row:int):Node
+		{
+			return _grid.getNode(col, row);
 		}
 	}
 }

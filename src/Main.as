@@ -8,8 +8,6 @@ package
 	import net.flashpunk.FP;
 	
 	import worlds.CombatWorld;
-	import worlds.IsometricCombatWorld;
-	import worlds.AsWingWorld;
 	
 	/**
 	 * ...
@@ -28,10 +26,7 @@ package
 		override public function init():void
 		{
 			super.init();
-			//FP.world = new CombatWorld();
-			FP.world = new IsometricCombatWorld();
-			//FP.world = new UIWorld();
-			//FP.world = new AsWingWorld();
+			FP.world = new CombatWorld();
 		}
 	}	
 }

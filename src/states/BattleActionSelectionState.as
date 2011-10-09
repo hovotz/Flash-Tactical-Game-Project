@@ -3,15 +3,13 @@ package states
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
-	
+	import worlds.CombatWorld;
 	import net.flashpunk.FP;
 	import net.flashpunk.utils.Input;
-	
 	import fsm.State;
-	
 	import builders.Terrain;
-	
 	import forms.UnitActionMenuForm;
+	import entities.Selector;
 	
 	/**
 	 * ...
@@ -21,9 +19,9 @@ package states
 	{
 		private static var instance:BattleActionSelectionState;
 		
-		private var _agent:*;
+		private var _combatWorld:CombatWorld;
 		private var _terrain:Terrain;
-		private var _camera:Point;
+		private var _selector:Selector;
 		private var _unitActionsMenuForm:UnitActionMenuForm;
 		
 		public function BattleActionSelectionState(key:SingletonEnforcer) 
@@ -42,10 +40,11 @@ package states
 		
 		public function enter(agent:*):void
 		{
-			_agent = agent;
-			_terrain = agent.getTerrain();
-			_camera = agent.camera;
-			_unitActionsMenuForm = agent.getUnitActionsMenuForm();
+			_combatWorld 			= agent;
+			_terrain 				= _combatWorld.getTerrain();
+			_selector	 			= _combatWorld.getSelector();
+			_unitActionsMenuForm 	= _combatWorld.getUnitActionsMenuForm();
+			
 			_unitActionsMenuForm.changeAppearance(UnitActionMenuForm.NORMAL_APPEARANCE);
 			_unitActionsMenuForm.setLocationXY(FP.width - _unitActionsMenuForm.getWidth(), FP.height - _unitActionsMenuForm.getHeight());
 			_unitActionsMenuForm.attackButton.addEventListener(MouseEvent.CLICK, onAttackButtonClickEvent);
@@ -68,17 +67,17 @@ package states
 		
 		private function onAttackButtonClickEvent(e:Event):void
 		{
-			_agent.getStateMachine().changeState(BattleDecideAttackState.getInstance());
+			_combatWorld.getStateMachine().changeState(BattleDecideAttackState.getInstance());
 		}
 		
 		private function onMoveButtonClickEvent(e:Event):void
 		{
-			_agent.getStateMachine().changeState(BattleDecideMoveState.getInstance());
+			_combatWorld.getStateMachine().changeState(BattleDecideMoveState.getInstance());
 		}
 		
 		private function onWaitButtonClickEvent(e:Event):void
 		{
-			_agent.getStateMachine().changeState(BattlePerformWaitState.getInstance());
+			_combatWorld.getStateMachine().changeState(BattlePerformWaitState.getInstance());
 		}
 	}
 }
